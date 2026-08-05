@@ -1389,10 +1389,24 @@ window.addEventListener("DOMContentLoaded", () => {
       map.on("mouseleave", id, () => map.getCanvas().style.cursor = "");
     });
 
+    // F5・スマホのプルダウン更新など「再読み込み」の場合は、前回の検索状態を
+    // 引きずらず必ずまっさらな状態に戻す(ブラウザが入力欄の値を勝手に復元することがあるため明示的にクリアする)。
+    const navEntry = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    const isReload = (navEntry && navEntry.type === "reload") ||
+      (window.performance && window.performance.navigation && window.performance.navigation.type === 1);
+
+    if(isReload){
+      document.getElementById("addr-input").value = "";
+      document.getElementById("search-clear-btn").classList.remove("visible");
+      const url = new URL(window.location.href);
+      url.search = "";
+      window.history.replaceState(null, "", url.toString());
+    }
+
     const initParams = new URLSearchParams(window.location.search);
-    const initAddress = initParams.get("address");
-    const initLat = parseFloat(initParams.get("lat"));
-    const initLon = parseFloat(initParams.get("lon"));
+    const initAddress = isReload ? null : initParams.get("address");
+    const initLat = isReload ? NaN : parseFloat(initParams.get("lat"));
+    const initLon = isReload ? NaN : parseFloat(initParams.get("lon"));
     if(initAddress){
       document.getElementById("addr-input").value = initAddress;
       document.getElementById("search-clear-btn").classList.add("visible");
