@@ -77,11 +77,12 @@
   .hazard-toggle input{accent-color:var(--navy);}
   .hazard-toggle:has(input:checked){background:var(--navy);color:#fff;border-color:var(--navy);}
 
-  .collapse-section{max-width:700px;margin:0 auto 12px;}
+  .collapse-row{display:flex;flex-wrap:wrap;gap:10px;max-width:700px;margin:0 auto 12px;}
+  .collapse-section{flex:1;min-width:150px;}
   .collapse-toggle{
     display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
-    padding:13px 20px;background:#fff;border:1px solid var(--line);border-radius:99px;
-    font-size:.92rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .2s ease;
+    padding:8px 18px;background:#fff;border:1px solid var(--line);border-radius:99px;
+    font-size:.86rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .2s ease;
   }
   .collapse-toggle:hover{border-color:var(--navy);}
   .collapse-arrow{font-size:.7rem;transition:transform .2s ease;color:var(--muted);}
@@ -252,32 +253,34 @@
   <button class="chip" data-lat="26.2122" data-lon="127.6791">沖縄</button>
 </div>
 
-<div class="collapse-section wrap">
-  <button type="button" class="collapse-toggle" data-target="hazard-body">
-    <span>🌊 ハザード情報</span><span class="collapse-arrow">▼</span>
-  </button>
-  <div class="collapse-body" id="hazard-body">
-    <p class="collapse-desc">洪水・津波・高潮・土砂災害・液状化のリスクを地図に重ねて表示できます。</p>
-    <div class="hazard-panel">
-      <label class="hazard-toggle"><input type="checkbox" data-hazard="flood"><span>🌊 洪水浸水想定</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-hazard="tsunami"><span>🌀 津波浸水想定</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-hazard="surge"><span>⛈️ 高潮浸水想定</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-hazard="landslide"><span>⛰️ 土砂災害警戒区域</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-hazard="liquefaction"><span>🏚️ 液状化しやすさ</span></label>
+<div class="collapse-row wrap">
+  <div class="collapse-section">
+    <button type="button" class="collapse-toggle" data-target="hazard-body">
+      <span>🌊 ハザード情報</span><span class="collapse-arrow">▼</span>
+    </button>
+    <div class="collapse-body" id="hazard-body">
+      <p class="collapse-desc">洪水・津波・高潮・土砂災害・液状化のリスクを地図に重ねて表示できます。</p>
+      <div class="hazard-panel">
+        <label class="hazard-toggle"><input type="checkbox" data-hazard="flood"><span>🌊 洪水浸水想定</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-hazard="tsunami"><span>🌀 津波浸水想定</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-hazard="surge"><span>⛈️ 高潮浸水想定</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-hazard="landslide"><span>⛰️ 土砂災害警戒区域</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-hazard="liquefaction"><span>🏚️ 液状化しやすさ</span></label>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="collapse-section wrap">
-  <button type="button" class="collapse-toggle" data-target="facility-body">
-    <span>🏫 周辺施設</span><span class="collapse-arrow">▼</span>
-  </button>
-  <div class="collapse-body" id="facility-body">
-    <p class="collapse-desc">学校・保育園幼稚園・医療機関を地図に重ねて表示できます。</p>
-    <div class="hazard-panel">
-      <label class="hazard-toggle"><input type="checkbox" data-facility="school"><span>🏫 学校</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-facility="nursery"><span>🧸 保育園・幼稚園</span></label>
-      <label class="hazard-toggle"><input type="checkbox" data-facility="medical"><span>🏥 医療機関</span></label>
+  <div class="collapse-section">
+    <button type="button" class="collapse-toggle" data-target="facility-body">
+      <span>🏫 周辺施設</span><span class="collapse-arrow">▼</span>
+    </button>
+    <div class="collapse-body" id="facility-body">
+      <p class="collapse-desc">学校・保育園幼稚園・医療機関を地図に重ねて表示できます。</p>
+      <div class="hazard-panel">
+        <label class="hazard-toggle"><input type="checkbox" data-facility="school"><span>🏫 学校</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-facility="nursery"><span>🧸 保育園・幼稚園</span></label>
+        <label class="hazard-toggle"><input type="checkbox" data-facility="medical"><span>🏥 医療機関</span></label>
+      </div>
     </div>
   </div>
 </div>
