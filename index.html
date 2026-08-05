@@ -1382,13 +1382,26 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("search-form").addEventListener("submit", (e) => {
-    e.preventDefault();
+  function runSearch(){
     const q = document.getElementById("addr-input").value.trim();
     if(q) geocodeAndLoad(q);
+  }
+  document.getElementById("search-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    document.getElementById("addr-input").blur();
+    runSearch();
   });
   const addrInput = document.getElementById("addr-input");
   const clearBtn = document.getElementById("search-clear-btn");
+  // フォームのsubmitイベントに頼らず、Enter/検索キーのkeydownでも直接発火させる。
+  // iOS内蔵Safari以外(X/LINE等のアプリ内WebView)ではネイティブsubmitが効かないことがあるため。
+  addrInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" || e.keyCode === 13){
+      e.preventDefault();
+      addrInput.blur();
+      runSearch();
+    }
+  });
   addrInput.addEventListener("input", () => {
     clearBtn.classList.toggle("visible", addrInput.value.length > 0);
   });
