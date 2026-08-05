@@ -219,7 +219,7 @@
   .pli-idx{color:var(--ink);font-size:.74rem;font-weight:800;margin-right:4px;}
   .pli-time{color:var(--ink);font-size:.76rem;}
   .pli-price{font-weight:800;color:var(--navy);font-size:1rem;white-space:nowrap;}
-  .pli-sub{display:flex;justify-content:space-between;color:var(--ink);font-size:.78rem;margin-top:3px;}
+  .pli-sub{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 8px;color:var(--ink);font-size:.78rem;margin-top:3px;}
   .pli-stars{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.76rem;color:var(--ink);}
   .pli-stars .stars{color:var(--gold);letter-spacing:1px;}
   .pop-legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.74rem;color:var(--ink);margin:8px 0;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
@@ -785,7 +785,10 @@ function sortRecords(records, key){
 }
 
 function renderRecordItem(r, medianSqm, index){
-  const perSqmText = r._price_per_sqm != null ? `${fmtManUnit(r._price_per_sqm)}万円/㎡` : "";
+  const perTsuboVal = r._price_per_sqm != null ? r._price_per_sqm * 3.30578 : null;
+  const perSqmText = r._price_per_sqm != null
+    ? `${fmtManUnit(r._price_per_sqm)}万円/㎡（${fmtManUnit(perTsuboVal)}万円/坪）`
+    : "";
   const timeText = r._quarterSort ? `${r.point_in_time_name_ja}（${relativeTimeLabel(r._year, r._quarter)}）` : (r.point_in_time_name_ja || "");
   let starsHtml = "";
   if(medianSqm != null && r._price_per_sqm != null){
