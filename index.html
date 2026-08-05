@@ -200,7 +200,7 @@
 
 <div class="topbar">
   <div class="topbar-inner">
-    <span class="topbar-title">📍 実売価格マップ</span>
+    <a href="/" class="topbar-title">📍 実売価格マップ</a>
     <div class="mode-toggle" id="mode-toggle">
       <button type="button" data-mode="mobile">📱 スマホサイトを見る</button>
       <button type="button" data-mode="pc">💻 PCサイトを見る</button>
@@ -335,7 +335,10 @@
 <div class="share-cta">
   <div class="wrap">
     <p>このマップが役に立ったら、まわりの人にも教えてあげてください。</p>
-    <a href="#" id="share-x-btn" class="btn btn-fill" style="background:#000;border-color:#000;">🐦 Xでシェアする</a>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">
+      <a href="#" id="share-x-btn" class="btn btn-fill" style="background:#000;border-color:#000;">🐦 Xでシェアする</a>
+      <a href="#" id="top-btn" class="btn btn-fill" style="background:#fff;color:var(--navy);border-color:#fff;">▲ トップに戻る</a>
+    </div>
   </div>
   <p class="credit">データ出典：国土交通省「不動産情報ライブラリ」/ 地図：国土地理院</p>
 </div>
@@ -1164,6 +1167,11 @@ window.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  });
+
+  document.getElementById("top-btn").addEventListener("click", (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   map = new maplibregl.Map({
