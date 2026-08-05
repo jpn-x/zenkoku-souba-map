@@ -349,12 +349,12 @@
 
 <div class="legend">
   <div class="legend-group">
-    <span class="legend-dot" style="background:#243A4D"></span>成約価格（駅単位に集約・件数で大きさが変化）
+    <span class="legend-dot" style="background:#2563eb"></span>成約価格（駅単位に集約・件数で大きさが変化）
   </div>
   <div class="legend-group">
     地価公示・地価調査（円/㎡）
     <span class="legend-scale">
-      <span style="background:#fde68a"></span><span style="background:#fbbf24"></span><span style="background:#f59e0b"></span><span style="background:#d97706"></span><span style="background:#b45309"></span>
+      <span style="background:#fff3b0"></span><span style="background:#ffe066"></span><span style="background:#ffc233"></span><span style="background:#e6a500"></span><span style="background:#b8860b"></span>
     </span>
     <span>低 → 高</span>
   </div>
@@ -1348,10 +1348,10 @@ window.addEventListener("DOMContentLoaded", () => {
         "circle-radius": 6,
         "circle-color": [
           "step", ["coalesce", ["get", "_price_num"], 0],
-          "#fde68a", 150000, "#fbbf24", 350000, "#f59e0b", 700000, "#d97706", 1500000, "#b45309"
+          "#fff3b0", 150000, "#ffe066", 350000, "#ffc233", 700000, "#e6a500", 1500000, "#b8860b"
         ],
-        "circle-stroke-width": 1,
-        "circle-stroke-color": "#fff",
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": "#243A4D",
       },
     });
 
@@ -1361,8 +1361,8 @@ window.addEventListener("DOMContentLoaded", () => {
       source: "stations",
       paint: {
         "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 8, 50, 22],
-        "circle-color": "#243A4D",
-        "circle-opacity": 0.75,
+        "circle-color": "#2563eb",
+        "circle-opacity": 0.82,
         "circle-stroke-width": 2,
         "circle-stroke-color": "#fff",
       },
