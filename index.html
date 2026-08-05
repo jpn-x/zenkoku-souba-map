@@ -61,7 +61,10 @@
     max-width:700px;margin:0 auto 20px;display:flex;gap:10px;background:#fff;
     border:1px solid var(--line);border-radius:6px;padding:8px;box-shadow:0 10px 30px -14px rgba(0,0,0,.2);
   }
-  .search-bar input{flex:1;border:none;padding:13px 14px;font-size:1rem;font-family:inherit;background:transparent;color:var(--ink);}
+  .search-bar input{flex:1;min-width:0;border:none;padding:13px 14px;font-size:1rem;font-family:inherit;background:transparent;color:var(--ink);}
+  .search-bar .btn{flex-shrink:0;padding:13px 18px;}
+  .search-clear{display:none;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:0 6px;flex-shrink:0;}
+  .search-clear.visible{display:block;}
   .search-bar input:focus{outline:none;}
 
   .chip-row{max-width:900px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
@@ -237,10 +240,11 @@
   同じ駅マーカーに複数の取引がまとまっている場合があります。クリックすると詳細な内訳が見られます。
 </div>
 
-<div class="search-bar">
-  <input id="addr-input" type="text" placeholder="住所や駅名で検索（例：大阪市中央区、北区）" autocomplete="off">
-  <button class="btn btn-fill" id="search-btn">検索</button>
-</div>
+<form class="search-bar" id="search-form">
+  <input id="addr-input" type="search" enterkeyhint="search" placeholder="住所や駅名で検索（例：大阪市中央区、北区）" autocomplete="off">
+  <button type="button" class="search-clear" id="search-clear-btn" aria-label="検索欄をクリア">✕</button>
+  <button type="submit" class="btn btn-fill" id="search-btn">検索</button>
+</form>
 <div class="chip-row">
   <button class="chip" data-lat="35.6817" data-lon="139.7669">東京</button>
   <button class="chip active" data-lat="34.7025" data-lon="135.4962">大阪</button>
@@ -1367,6 +1371,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const initLon = parseFloat(initParams.get("lon"));
     if(initAddress){
       document.getElementById("addr-input").value = initAddress;
+      document.getElementById("search-clear-btn").classList.add("visible");
       document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
       geocodeAndLoad(initAddress);
     }else if(!isNaN(initLat) && !isNaN(initLon)){
@@ -1377,15 +1382,23 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("search-btn").addEventListener("click", () => {
+  document.getElementById("search-form").addEventListener("submit", (e) => {
+    e.preventDefault();
     const q = document.getElementById("addr-input").value.trim();
     if(q) geocodeAndLoad(q);
   });
-  document.getElementById("addr-input").addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      const q = e.target.value.trim();
-      if(q) geocodeAndLoad(q);
-    }
+  const addrInput = document.getElementById("addr-input");
+  const clearBtn = document.getElementById("search-clear-btn");
+  addrInput.addEventListener("input", () => {
+    clearBtn.classList.toggle("visible", addrInput.value.length > 0);
+  });
+  clearBtn.addEventListener("click", () => {
+    addrInput.value = "";
+    clearBtn.classList.remove("visible");
+    addrInput.focus();
+    const url = new URL(window.location.href);
+    url.search = "";
+    window.history.replaceState(null, "", url.toString());
   });
   document.querySelectorAll(".hazard-toggle input[data-hazard]").forEach(input => {
     input.addEventListener("change", async () => {
