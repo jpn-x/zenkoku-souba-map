@@ -56,8 +56,12 @@
     border-radius:6px;padding:18px 20px;font-size:.88rem;color:var(--ink);line-height:1.85;
   }
   .notice b{color:var(--navy);}
-  .notice-marks{display:flex;flex-wrap:wrap;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid #e8d7ae;font-size:.85rem;}
+  .notice-marks{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid #e8d7ae;font-size:.85rem;}
   .notice-marks span{display:inline-flex;align-items:center;gap:7px;}
+  .notice-info-toggle{background:#fff;border:1px solid #e8d7ae;border-radius:99px;padding:5px 14px;font-size:.78rem;color:var(--navy-2);cursor:pointer;}
+  .notice-info-toggle:hover{background:var(--cream);}
+  .notice-info-body{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d7ae;font-size:.82rem;line-height:1.75;}
+  .notice-info-body.open{display:block;}
   .notice-mark-dot{width:13px;height:13px;border-radius:50%;display:inline-block;flex-shrink:0;}
 
   .search-bar{
@@ -179,6 +183,23 @@
   .trend-toggle-btn{padding:6px 16px;border:1px solid var(--line);border-radius:99px;font-size:.82rem;background:#fff;cursor:pointer;transition:all .2s;}
   .trend-toggle-btn:hover,.trend-toggle-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
   .trend-status{font-size:.8rem;color:var(--muted);margin-top:6px;text-align:right;}
+  #trend-chart,#trend-chart-tsubo{cursor:zoom-in;}
+  .trend-zoom-hint{font-size:.72rem;color:var(--muted);text-align:center;margin-top:2px;}
+
+  .trend-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;}
+  .trend-modal-overlay.visible{display:block;}
+  .trend-modal{
+    display:none;position:fixed;z-index:1101;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:#fff;border-radius:10px;padding:24px 24px 16px;max-width:94vw;width:900px;max-height:88vh;
+    overflow-y:auto;box-shadow:0 20px 60px -12px rgba(0,0,0,.4);
+  }
+  .trend-modal.visible{display:block;}
+  .trend-modal-close{
+    position:absolute;top:10px;right:14px;background:none;border:none;font-size:1.4rem;
+    color:var(--muted);cursor:pointer;line-height:1;padding:6px;
+  }
+  .trend-modal h3{font-size:1.05rem;color:var(--navy);margin-bottom:14px;padding-right:30px;}
+  .trend-modal svg{width:100%;height:auto;display:block;}
 
   .share-cta{background:var(--navy);color:#fff;padding:40px 0;text-align:center;}
   .share-cta p{font-size:.95rem;color:#dfe5ea;margin-bottom:18px;}
@@ -203,6 +224,7 @@
   .pli-stars .stars{color:var(--gold);letter-spacing:1px;}
   .pop-legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.74rem;color:var(--ink);margin:8px 0;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
   .pop-note{font-size:.74rem;color:var(--ink);margin:2px 0 6px;}
+  .pop-note-warn{font-size:.74rem;color:var(--ink);background:#fff8ea;border:1px solid #e8d7ae;border-radius:6px;padding:8px 10px;margin-top:10px;line-height:1.6;}
   .pop-jump{display:flex;gap:6px;margin-bottom:8px;}
   .pop-jump button{flex:1;padding:5px;border:1px dashed var(--line);border-radius:6px;font-size:.72rem;background:var(--cream);color:var(--ink);cursor:pointer;}
   .pop-jump button:hover{background:var(--gold);color:#fff;border-color:var(--gold);}
@@ -250,6 +272,12 @@
   <div class="notice-marks">
     <span><span class="notice-mark-dot" style="background:#31f21f"></span>緑色マーク・・・個別表示</span>
     <span><span class="notice-mark-dot" style="background:#2563eb"></span>青色マーク・・・まとめて表示</span>
+    <button type="button" class="notice-info-toggle" id="price-gap-toggle">ⓘ 緑色マークの価格が安く見えるのはなぜ？</button>
+  </div>
+  <div id="price-gap-note" class="notice-info-body">
+    緑色マーク（地価公示・地価調査）は国が算定した<b>公的な価格</b>で、実際に売買された価格（実勢価格＝青色マーカー）とは別物です。
+    一般的に実勢価格は公示価格の<b>1.1〜2倍程度</b>になることが多く、人気エリアほど乖離が大きくなる傾向があります（土地の形状・日当たり・接道状況などの個別条件や、評価時点と現在とのタイムラグが主な理由です）。
+    同じ場所でも、周辺の実際の相場感は青色マーカーの成約価格を参考にしてください。
   </div>
 </div>
 
@@ -331,6 +359,13 @@
   </div>
 </div>
 
+<div id="trend-modal-overlay" class="trend-modal-overlay"></div>
+<div id="trend-modal" class="trend-modal">
+  <button type="button" id="trend-modal-close" class="trend-modal-close" aria-label="閉じる">✕</button>
+  <h3 id="trend-modal-title"></h3>
+  <div id="trend-modal-chart"></div>
+</div>
+
 <div id="sheet-overlay" class="sheet-overlay"></div>
 <div id="bottom-sheet" class="bottom-sheet" data-snap="half">
   <div class="sheet-handle-row">
@@ -372,6 +407,7 @@
     </div>
   </div>
   <div id="trend-chart"></div>
+  <p class="trend-zoom-hint">🔍 タップ／クリックで拡大表示</p>
   <p id="trend-status" class="trend-status">読み込み中…</p>
 </div>
 
@@ -380,6 +416,7 @@
     <h3>📈 坪単価の推移（中心エリア）</h3>
   </div>
   <div id="trend-chart-tsubo"></div>
+  <p class="trend-zoom-hint">🔍 タップ／クリックで拡大表示</p>
   <p id="trend-status-tsubo" class="trend-status">読み込み中…</p>
 </div>
 
@@ -884,9 +921,24 @@ async function loadTrend(lon, lat){
 
   trendEl.innerHTML = renderTrendSVG(trendSqm, "㎡");
   trendTsuboEl.innerHTML = renderTrendSVG(trendTsubo, "坪");
+  lastTrendSqm = trendSqm;
+  lastTrendTsubo = trendTsubo;
   const areaLabel = radius === 0 ? "中心タイル1枚分" : "データが少ないため範囲を拡大した周辺タイル分";
   trendStatusEl.textContent = `過去${trendRangeYears}年・${areaLabel}の成約データ（${raw.length}件）から四半期ごとの㎡単価中央値を算出`;
   trendTsuboStatusEl.textContent = `過去${trendRangeYears}年・${areaLabel}の成約データ（${raw.length}件）から四半期ごとの坪単価中央値を算出`;
+}
+
+let lastTrendSqm = [], lastTrendTsubo = [];
+function openTrendModal(unitLabel){
+  const data = unitLabel === "坪" ? lastTrendTsubo : lastTrendSqm;
+  document.getElementById("trend-modal-title").textContent = `📈 ${unitLabel}単価の推移（中心エリア）`;
+  document.getElementById("trend-modal-chart").innerHTML = renderTrendSVG(data, unitLabel);
+  document.getElementById("trend-modal-overlay").classList.add("visible");
+  document.getElementById("trend-modal").classList.add("visible");
+}
+function closeTrendModal(){
+  document.getElementById("trend-modal-overlay").classList.remove("visible");
+  document.getElementById("trend-modal").classList.remove("visible");
 }
 
 async function fetchTiles(endpoint, params, centerTile, radius = TILE_RADIUS){
@@ -1125,6 +1177,9 @@ function buildLandPricePopupHTML(p){
     <div class="pop-row"><span class="k">用途地域</span><span class="v">${p.regulations_use_category_name_ja || "―"}</span></div>
     <div class="pop-row"><span class="k">最寄駅</span><span class="v">${p.nearest_station_name_ja || "―"}（${p.u_road_distance_to_nearest_station_name_ja || "―"}）</span></div>
     <div class="pop-row"><span class="k">地積</span><span class="v">${p.u_cadastral_ja || "―"}</span></div>
+    <div class="pop-note-warn">
+      ⚠️ この価格は国が公表する公的な「地価公示・地価調査」価格で、実際の売買価格（実勢価格）とは異なります。目安として実勢価格は公示価格の1.1〜2倍程度になることが多く、人気エリアほど乖離が大きくなる傾向があります。近くの実際の成約価格は青色マーカーでご確認ください。
+    </div>
     ${buildShareButtonHTML()}
   `;
 }
@@ -1261,6 +1316,10 @@ window.addEventListener("DOMContentLoaded", () => {
       const isOpen = target.classList.toggle("open");
       btn.classList.toggle("open", isOpen);
     });
+  });
+
+  document.getElementById("price-gap-toggle").addEventListener("click", () => {
+    document.getElementById("price-gap-note").classList.toggle("open");
   });
 
   map = new maplibregl.Map({
@@ -1507,6 +1566,11 @@ window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sheet-close").addEventListener("click", closeBottomSheet);
   document.getElementById("side-panel-close").addEventListener("click", closeSidePanel);
   document.getElementById("sheet-overlay").addEventListener("click", closeBottomSheet);
+
+  document.getElementById("trend-chart").addEventListener("click", () => openTrendModal("㎡"));
+  document.getElementById("trend-chart-tsubo").addEventListener("click", () => openTrendModal("坪"));
+  document.getElementById("trend-modal-close").addEventListener("click", closeTrendModal);
+  document.getElementById("trend-modal-overlay").addEventListener("click", closeTrendModal);
   document.querySelectorAll(".sheet-snap-buttons button").forEach(btn => {
     btn.addEventListener("click", () => {
       document.getElementById("bottom-sheet").dataset.snap = btn.dataset.snap;
