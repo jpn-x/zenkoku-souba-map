@@ -1129,7 +1129,7 @@ function buildLandPricePopupHTML(p){
   `;
 }
 
-async function loadArea(lon, lat){
+async function loadArea(lon, lat, searchedAreaLabel){
   statusEl.textContent = "データを取得中…";
   countEl.textContent = "";
   map.flyTo({ center: [lon, lat], zoom: 15 });
@@ -1146,7 +1146,12 @@ async function loadArea(lon, lat){
   ]);
 
   const stationFeatures = groupStationPoints(xpt001Raw);
-  renderAreaSummary(buildAreaSummary(xpt001Raw));
+  const summary = buildAreaSummary(xpt001Raw);
+  // 周辺の取引が少ない地方エリアだと、集計対象が離れた隣町のデータに偏り
+  // 「エリア名」が検索した場所と食い違うことがあるため、住所検索由来のときは
+  // 検索してヒットした地名をそのままエリア名として優先する。
+  if(searchedAreaLabel) summary.title = searchedAreaLabel;
+  renderAreaSummary(summary);
 
   xpt002Raw.forEach(f => {
     f.properties._price_num = parsePricePerSqm(f.properties.u_current_years_price_ja);
@@ -1187,7 +1192,9 @@ async function geocodeAndLoad(query){
     }
     const matchedTitle = data[0].properties && data[0].properties.title;
     const [lon, lat] = data[0].geometry.coordinates;
-    loadArea(lon, lat);
+    // 都道府県名を除いて、他エリアの表示（「大阪市西区 南堀江」等）とスタイルを揃える。
+    const areaLabel = matchedTitle ? matchedTitle.replace(/^.{2,4}?[都道府県]/, "") : null;
+    loadArea(lon, lat, areaLabel);
     if(matchedTitle){
       setSearchMatchLabel(`📍 <strong>${matchedTitle}</strong> 付近で検索しました。違う場所の場合は「〇〇区〇〇」のように市区町村名から詳しく入力してください。`);
     }
