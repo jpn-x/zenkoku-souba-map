@@ -1190,8 +1190,14 @@ async function geocodeAndLoad(query){
       statusEl.textContent = "住所が見つかりませんでした。別のキーワードでお試しください。";
       return;
     }
-    const matchedTitle = data[0].properties && data[0].properties.title;
-    const [lon, lat] = data[0].geometry.coordinates;
+    // GSIは複数候補を返すことがあり、1件目が「〇〇県〇〇市」のような大まかな一致で、
+    // 駅名など具体的な完全一致がもっと後ろの候補に入っていることがあるため、
+    // クエリと完全一致・部分一致するタイトルを優先的に選ぶ。
+    const best = data.find(d => d.properties && d.properties.title === query)
+      || data.find(d => d.properties && d.properties.title && d.properties.title.includes(query))
+      || data[0];
+    const matchedTitle = best.properties && best.properties.title;
+    const [lon, lat] = best.geometry.coordinates;
     // 都道府県名を除いて、他エリアの表示（「大阪市西区 南堀江」等）とスタイルを揃える。
     const areaLabel = matchedTitle ? matchedTitle.replace(/^.{2,4}?[都道府県]/, "") : null;
     loadArea(lon, lat, areaLabel);
