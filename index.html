@@ -56,6 +56,9 @@
     border-radius:6px;padding:18px 20px;font-size:.88rem;color:var(--ink);line-height:1.85;
   }
   .notice b{color:var(--navy);}
+  .notice-marks{display:flex;flex-wrap:wrap;gap:18px;margin-top:12px;padding-top:12px;border-top:1px solid #e8d7ae;font-size:.85rem;}
+  .notice-marks span{display:inline-flex;align-items:center;gap:7px;}
+  .notice-mark-dot{width:13px;height:13px;border-radius:50%;display:inline-block;flex-shrink:0;}
 
   .search-bar{
     max-width:700px;margin:0 auto 20px;display:flex;gap:10px;background:#fff;
@@ -241,9 +244,13 @@
 
 <div class="notice wrap">
   <b>データの見方にご注意ください。</b>
-  黄色のピン（地価公示・地価調査）は地点そのものの正確な位置です。一方、青色の駅マーカー（実際の成約価格）は
+  緑色のピン（地価公示・地価調査）は地点そのものの正確な位置です。一方、青色の駅マーカー（実際の成約価格）は
   <b>物件の位置ではなく、その取引の最寄り駅の位置</b>に表示されます（国が公開する際、個人情報保護のため物件所在地は町丁目までしか分からない仕様のため）。
   同じ駅マーカーに複数の取引がまとまっている場合があります。クリックすると詳細な内訳が見られます。
+  <div class="notice-marks">
+    <span><span class="notice-mark-dot" style="background:#31f21f"></span>緑色マーク・・・個別表示</span>
+    <span><span class="notice-mark-dot" style="background:#2563eb"></span>青色マーク・・・まとめて表示</span>
+  </div>
 </div>
 
 <form class="search-bar" id="search-form">
@@ -352,7 +359,7 @@
     <span class="legend-dot" style="background:#2563eb"></span>成約価格（駅単位に集約・件数で大きさが変化）
   </div>
   <div class="legend-group">
-    <span class="legend-dot" style="background:#f2eb1f"></span>地価公示・地価調査
+    <span class="legend-dot" style="background:#31f21f"></span>地価公示・地価調査
   </div>
 </div>
 
@@ -1342,7 +1349,7 @@ window.addEventListener("DOMContentLoaded", () => {
       source: "landprices",
       paint: {
         "circle-radius": 6,
-        "circle-color": "#f2eb1f",
+        "circle-color": "#31f21f",
         "circle-stroke-width": 1.5,
         "circle-stroke-color": "#243A4D",
       },
