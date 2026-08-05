@@ -66,6 +66,12 @@
   .search-clear{display:none;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:0 6px;flex-shrink:0;}
   .search-clear.visible{display:block;}
   .search-bar input:focus{outline:none;}
+  .search-match-label{
+    display:none;max-width:700px;margin:-10px auto 16px;padding:0 4px;
+    font-size:.85rem;color:var(--navy-2);text-align:center;line-height:1.5;
+  }
+  .search-match-label.visible{display:block;}
+  .search-match-label strong{color:var(--navy);}
 
   .chip-row{max-width:900px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
   .chip{padding:8px 18px;border:1px solid var(--line);border-radius:99px;font-size:.86rem;background:#fff;cursor:pointer;transition:all .2s;}
@@ -245,6 +251,7 @@
   <button type="button" class="search-clear" id="search-clear-btn" aria-label="検索欄をクリア">✕</button>
   <button type="submit" class="btn btn-fill" id="search-btn">検索</button>
 </form>
+<div id="search-match-label" class="search-match-label"></div>
 <div class="chip-row">
   <button class="chip" data-lat="35.6817" data-lon="139.7669">東京</button>
   <button class="chip active" data-lat="34.7025" data-lon="135.4962">大阪</button>
@@ -1153,8 +1160,21 @@ async function loadArea(lon, lat){
   countEl.textContent = `駅ポイント ${stationFeatures.length}件（取引${xpt001Raw.length}件を集約） / 地価地点 ${xpt002Raw.length}件`;
 }
 
+function setSearchMatchLabel(html){
+  const el = document.getElementById("search-match-label");
+  if(!html){
+    el.classList.remove("visible");
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = html;
+  el.classList.add("visible");
+}
+
 async function geocodeAndLoad(query){
   statusEl.textContent = "住所を検索中…";
+  setSearchMatchLabel("");
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
   try{
     const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`);
     const data = await res.json();
@@ -1162,8 +1182,12 @@ async function geocodeAndLoad(query){
       statusEl.textContent = "住所が見つかりませんでした。別のキーワードでお試しください。";
       return;
     }
+    const matchedTitle = data[0].properties && data[0].properties.title;
     const [lon, lat] = data[0].geometry.coordinates;
     loadArea(lon, lat);
+    if(matchedTitle){
+      setSearchMatchLabel(`📍 <strong>${matchedTitle}</strong> 付近で検索しました。違う場所の場合は「〇〇区〇〇」のように市区町村名から詳しく入力してください。`);
+    }
     updateShareUrl({ address: query });
   }catch(e){
     statusEl.textContent = "住所検索でエラーが発生しました。";
@@ -1408,6 +1432,7 @@ window.addEventListener("DOMContentLoaded", () => {
   clearBtn.addEventListener("click", () => {
     addrInput.value = "";
     clearBtn.classList.remove("visible");
+    setSearchMatchLabel("");
     addrInput.focus();
     const url = new URL(window.location.href);
     url.search = "";
@@ -1444,6 +1469,9 @@ window.addEventListener("DOMContentLoaded", () => {
     chip.addEventListener("click", () => {
       document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
+      addrInput.value = "";
+      clearBtn.classList.remove("visible");
+      setSearchMatchLabel("");
       loadArea(parseFloat(chip.dataset.lon), parseFloat(chip.dataset.lat));
       updateShareUrl({ address: chip.textContent });
     });
