@@ -241,7 +241,7 @@
 
 <div class="notice wrap">
   <b>データの見方にご注意ください。</b>
-  金色のピン（地価公示・地価調査）は地点そのものの正確な位置です。一方、青色の駅マーカー（実際の成約価格）は
+  黄色のピン（地価公示・地価調査）は地点そのものの正確な位置です。一方、青色の駅マーカー（実際の成約価格）は
   <b>物件の位置ではなく、その取引の最寄り駅の位置</b>に表示されます（国が公開する際、個人情報保護のため物件所在地は町丁目までしか分からない仕様のため）。
   同じ駅マーカーに複数の取引がまとまっている場合があります。クリックすると詳細な内訳が見られます。
 </div>
@@ -352,11 +352,7 @@
     <span class="legend-dot" style="background:#2563eb"></span>成約価格（駅単位に集約・件数で大きさが変化）
   </div>
   <div class="legend-group">
-    地価公示・地価調査（円/㎡）
-    <span class="legend-scale">
-      <span style="background:#fff3b0"></span><span style="background:#ffe066"></span><span style="background:#ffc233"></span><span style="background:#e6a500"></span><span style="background:#b8860b"></span>
-    </span>
-    <span>低 → 高</span>
+    <span class="legend-dot" style="background:#f2eb1f"></span>地価公示・地価調査
   </div>
 </div>
 
@@ -1346,10 +1342,7 @@ window.addEventListener("DOMContentLoaded", () => {
       source: "landprices",
       paint: {
         "circle-radius": 6,
-        "circle-color": [
-          "step", ["coalesce", ["get", "_price_num"], 0],
-          "#fff3b0", 150000, "#ffe066", 350000, "#ffc233", 700000, "#e6a500", 1500000, "#b8860b"
-        ],
+        "circle-color": "#f2eb1f",
         "circle-stroke-width": 1.5,
         "circle-stroke-color": "#243A4D",
       },
