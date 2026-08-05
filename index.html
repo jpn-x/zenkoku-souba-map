@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【実売成約価格ベース】全国不動産エリア相場マップ｜無料検索</title>
+<meta name="description" content="売出価格ではなく、実際に成約した価格で調べる無料の不動産相場マップ。国土交通省の公開データをもとに、全国どこでも駅・地区ごとの実売価格・地価公示・ハザード情報を地図で確認できます。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8D%3C/text%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="【実売成約価格ベース】全国不動産エリア相場マップ">
+<meta property="og:description" content="売出価格ではなく、実際に成約した価格で調べる無料の不動産相場マップ。全国どこでも検索できます。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="【実売成約価格ベース】全国不動産エリア相場マップ">
+<meta name="twitter:description" content="売出価格ではなく、実際に成約した価格で調べる無料の不動産相場マップ。全国どこでも検索できます。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{font-size:112.5%;} /* 高齢層にも読みやすいよう基準サイズを底上げ(16px→18px相当) */
+  :root{
+    --navy:#243A4D; --navy-2:#375063; --gold:#b8935a;
+    --cream:#f7f4ee; --white:#ffffff;
+    --line:#dcd6ca; --muted:#5c564c; --ink:#1c1a16;
+  }
+  html{scroll-behavior:smooth;}
+  body{background:var(--cream);color:var(--ink);font-family:'Noto Sans JP',sans-serif;line-height:1.75;}
+  h1,h2,h3{font-weight:800;}
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;border-radius:4px;font-weight:700;font-size:.92rem;letter-spacing:.02em;border:1px solid var(--navy);cursor:pointer;transition:all .2s ease;background:none;}
+  .btn-fill{background:var(--navy);color:#fff;}
+  .btn-fill:hover{background:var(--navy-2);}
+
+  .topbar{position:sticky;top:0;z-index:200;background:rgba(247,244,238,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .topbar-inner{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .topbar-title{font-size:1rem;font-weight:800;color:var(--navy);}
+  .mode-toggle{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px;}
+  .mode-toggle button{border:none;background:none;padding:8px 16px;border-radius:99px;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .mode-toggle button.active{background:var(--navy);color:#fff;}
+
+  .page-head{padding:44px 0 24px;text-align:center;}
+  .eyebrow{font-size:.8rem;letter-spacing:.14em;color:var(--gold);font-weight:800;margin-bottom:10px;}
+  .page-head h1{font-size:2rem;color:var(--navy);margin-bottom:14px;line-height:1.4;}
+  .page-head p{font-size:1rem;color:var(--muted);max-width:680px;margin:0 auto;}
+  @media(max-width:640px){.page-head h1{font-size:1.5rem;}}
+
+  .notice{
+    max-width:900px;margin:0 auto 28px;background:#fff8ea;border:1px solid #e8d7ae;
+    border-radius:6px;padding:18px 20px;font-size:.88rem;color:var(--ink);line-height:1.85;
+  }
+  .notice b{color:var(--navy);}
+
+  .search-bar{
+    max-width:700px;margin:0 auto 20px;display:flex;gap:10px;background:#fff;
+    border:1px solid var(--line);border-radius:6px;padding:8px;box-shadow:0 10px 30px -14px rgba(0,0,0,.2);
+  }
+  .search-bar input{flex:1;border:none;padding:13px 14px;font-size:1rem;font-family:inherit;background:transparent;color:var(--ink);}
+  .search-bar input:focus{outline:none;}
+
+  .chip-row{max-width:900px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .chip{padding:8px 18px;border:1px solid var(--line);border-radius:99px;font-size:.86rem;background:#fff;cursor:pointer;transition:all .2s;}
+  .chip:hover,.chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .hazard-panel{max-width:900px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;}
+  .hazard-panel-label{font-size:.8rem;color:var(--muted);font-weight:700;margin-right:2px;}
+  .hazard-toggle{
+    display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border:1px solid var(--line);
+    border-radius:99px;font-size:.84rem;background:#fff;cursor:pointer;transition:all .2s;user-select:none;
+  }
+  .hazard-toggle input{accent-color:var(--navy);}
+  .hazard-toggle:has(input:checked){background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .area-summary{margin-bottom:20px;}
+  .area-summary-box{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    border-radius:10px;padding:20px 22px;color:#fff;
+  }
+  .area-summary-title{font-size:1.05rem;font-weight:800;margin-bottom:12px;}
+  .area-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .as-stat{display:flex;flex-direction:column;gap:4px;}
+  .as-label{font-size:.76rem;color:#d3dbe2;}
+  .as-value{font-size:1.15rem;font-weight:800;color:#fff;}
+  body.mode-mobile .area-summary-grid{grid-template-columns:repeat(2,1fr);}
+
+  .map-shell{max-width:1180px;margin:0 auto 8px;padding:0 24px;position:relative;}
+  .map-btn-row{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .map-float-btn{
+    background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:99px;
+    padding:10px 18px;font-size:.86rem;font-weight:700;cursor:pointer;white-space:nowrap;
+    box-shadow:0 8px 20px -8px rgba(0,0,0,.35);transition:all .2s ease;
+  }
+  .map-float-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .side-panel{
+    display:none;position:absolute;top:0;right:0;height:100%;width:420px;max-width:92%;
+    background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.18);z-index:15;
+    flex-direction:column;transform:translateX(100%);transition:transform .25s ease;
+    border-radius:0 8px 8px 0;
+  }
+  .side-panel.visible{display:flex;transform:translateX(0);}
+  .side-panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);font-size:.9rem;font-weight:800;color:var(--navy);flex-shrink:0;}
+  .side-panel-head button{background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;line-height:1;padding:2px 6px;}
+  .side-panel-content{flex:1;overflow-y:auto;padding:16px 18px;overflow-anchor:none;font-family:'Noto Sans JP',sans-serif;font-size:.88rem;line-height:1.75;}
+  body.mode-mobile .side-panel{display:none !important;}
+
+  .sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:998;}
+  .sheet-overlay.visible{display:block;}
+  .bottom-sheet{
+    display:none;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:999;
+    background:#fff;border-radius:14px 14px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.25);
+    max-width:640px;margin:0 auto;height:55vh;transition:height .25s ease;
+  }
+  .bottom-sheet.visible{display:flex;}
+  .bottom-sheet[data-snap="peek"]{height:30vh;}
+  .bottom-sheet[data-snap="half"]{height:55vh;}
+  .bottom-sheet[data-snap="full"]{height:88vh;}
+  .sheet-handle-row{position:relative;display:flex;align-items:center;justify-content:center;padding:10px 0 6px;flex-shrink:0;}
+  .sheet-handle{width:40px;height:5px;border-radius:99px;background:var(--line);}
+  .sheet-close{position:absolute;right:10px;top:4px;background:none;border:none;font-size:1.5rem;color:var(--muted);padding:4px 10px;line-height:1;}
+  .sheet-snap-buttons{display:flex;gap:8px;padding:0 16px 10px;flex-shrink:0;}
+  .sheet-snap-buttons button{flex:1;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:.8rem;background:#fff;color:var(--navy-2);}
+  .sheet-snap-buttons button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .sheet-jump-buttons{display:flex;gap:8px;padding:0 16px 10px;flex-shrink:0;}
+  .sheet-jump-buttons button{flex:1;padding:7px;border:1px dashed var(--line);border-radius:8px;font-size:.76rem;background:var(--cream);color:var(--muted);}
+  .sheet-jump-buttons button:active{background:var(--gold);color:#fff;border-color:var(--gold);}
+  .sheet-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overflow-anchor:none;padding:0 16px 20px;}
+  body.mode-pc .bottom-sheet,body.mode-pc .sheet-overlay{display:none !important;}
+
+  #map{width:100%;height:750px;border-radius:8px;border:1px solid var(--line);background:#eee;}
+  body.mode-mobile #map{height:550px;}
+
+  .status-line{max-width:1180px;margin:10px auto 0;padding:0 24px;font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+
+  .legend{max-width:1180px;margin:18px auto 60px;padding:0 24px;display:flex;gap:28px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);}
+  .legend-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .legend-dot{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .legend-scale{display:flex;align-items:center;gap:4px;}
+  .legend-scale span{width:16px;height:12px;display:inline-block;border-radius:2px;}
+
+  .trend-card{max-width:1180px;margin:0 auto 40px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:22px 24px 18px;}
+  .trend-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;}
+  .trend-head h3{font-size:1rem;color:var(--navy);}
+  .trend-toggle{display:flex;gap:6px;}
+  .trend-toggle-btn{padding:6px 16px;border:1px solid var(--line);border-radius:99px;font-size:.82rem;background:#fff;cursor:pointer;transition:all .2s;}
+  .trend-toggle-btn:hover,.trend-toggle-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .trend-status{font-size:.8rem;color:var(--muted);margin-top:6px;text-align:right;}
+
+  .share-cta{background:var(--navy);color:#fff;padding:40px 0;text-align:center;}
+  .share-cta p{font-size:.95rem;color:#dfe5ea;margin-bottom:18px;}
+  .share-cta .credit{max-width:1180px;margin:24px auto 0;padding:0 24px;font-size:.74rem;color:#a9b6c1;}
+
+  .pop-title{font-weight:800;color:var(--navy);font-size:.96rem;margin-bottom:6px;}
+  .pop-badge{display:inline-block;background:var(--cream);color:var(--muted);font-size:.74rem;padding:3px 10px;border-radius:99px;margin-bottom:8px;}
+  .pop-row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:7px 0;}
+  .pop-row:last-child{border-bottom:none;}
+  .pop-row .k{color:var(--ink);white-space:nowrap;}
+  .pop-subtext{font-size:11.5px;color:var(--muted);margin-left:3px;}
+  .pop-row .v{text-align:right;font-weight:700;}
+  .pop-stats{background:var(--cream);border-radius:6px;padding:2px 10px;margin:8px 0;}
+  .pop-list-item{border-radius:5px;padding:9px 10px;margin-bottom:6px;border-left:4px solid var(--line);}
+  .pop-list-item:last-child{margin-bottom:0;}
+  .pli-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .pli-idx{color:var(--ink);font-size:.74rem;font-weight:800;margin-right:4px;}
+  .pli-time{color:var(--ink);font-size:.76rem;}
+  .pli-price{font-weight:800;color:var(--navy);font-size:1rem;white-space:nowrap;}
+  .pli-sub{display:flex;justify-content:space-between;color:var(--ink);font-size:.78rem;margin-top:3px;}
+  .pli-stars{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.76rem;color:var(--ink);}
+  .pli-stars .stars{color:var(--gold);letter-spacing:1px;}
+  .pop-legend{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:.74rem;color:var(--ink);margin:8px 0;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .pop-note{font-size:.74rem;color:var(--ink);margin:2px 0 6px;}
+  .pop-jump{display:flex;gap:6px;margin-bottom:8px;}
+  .pop-jump button{flex:1;padding:5px;border:1px dashed var(--line);border-radius:6px;font-size:.72rem;background:var(--cream);color:var(--ink);cursor:pointer;}
+  .pop-jump button:hover{background:var(--gold);color:#fff;border-color:var(--gold);}
+  body.mode-mobile .pop-jump{display:none;}
+  .pop-filter-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .pop-filter-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid var(--line);border-radius:99px;font-size:.74rem;color:var(--ink);cursor:pointer;}
+  .pop-filter-chip input{margin:0;}
+  .pop-sort-select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font-size:.8rem;color:var(--ink);background:#fff;margin-bottom:8px;}
+  .pop-filter-row2{display:flex;gap:6px;margin-bottom:8px;}
+  .pop-mini-select{flex:1;padding:7px 4px;border:1px solid var(--line);border-radius:6px;font-size:.74rem;color:var(--ink);background:#fff;min-width:0;}
+  .pop-action-row{display:flex;gap:8px;margin-bottom:6px;}
+  .pop-action-btn{flex:1;padding:7px;border:1px solid var(--navy);border-radius:6px;font-size:.78rem;background:#fff;color:var(--navy);cursor:pointer;}
+  .pop-action-btn:hover{background:var(--navy);color:#fff;}
+  .legend-swatch{display:inline-flex;align-items:center;gap:4px;}
+  .legend-swatch span{width:8px;height:8px;border-radius:2px;display:inline-block;}
+  .pop-share-btn{
+    display:block;text-align:center;margin-top:10px;padding:11px;border-radius:5px;
+    background:#000;color:#fff;font-size:.82rem;font-weight:700;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="topbar-title">📍 実売価格マップ</span>
+    <div class="mode-toggle" id="mode-toggle">
+      <button type="button" data-mode="mobile">📱 スマホサイトを見る</button>
+      <button type="button" data-mode="pc">💻 PCサイトを見る</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-head wrap">
+  <div class="eyebrow">実売成約価格ベース・AI推測なし</div>
+  <h1>全国不動産エリア相場マップ</h1>
+  <p><strong style="color:#F76045;">売出価格ではなく、実際に成約した価格</strong>を検索できます。国土交通省「不動産情報ライブラリ」の公開データをもとに、全国どこでも実売価格・地価公示の相場を地図で確認できます。</p>
+</div>
+
+<div class="notice wrap">
+  <b>データの見方にご注意ください。</b>
+  金色のピン（地価公示・地価調査）は地点そのものの正確な位置です。一方、青色の駅マーカー（実際の成約価格）は
+  <b>物件の位置ではなく、その取引の最寄り駅の位置</b>に表示されます（国が公開する際、個人情報保護のため物件所在地は町丁目までしか分からない仕様のため）。
+  同じ駅マーカーに複数の取引がまとまっている場合があります。クリックすると詳細な内訳が見られます。
+</div>
+
+<div class="search-bar">
+  <input id="addr-input" type="text" placeholder="住所や駅名で検索（例：大阪市中央区、北区）" autocomplete="off">
+  <button class="btn btn-fill" id="search-btn">検索</button>
+</div>
+<div class="chip-row">
+  <button class="chip active" data-lat="34.7025" data-lon="135.4962">大阪</button>
+  <button class="chip" data-lat="35.6817" data-lon="139.7669">東京</button>
+  <button class="chip" data-lat="34.9862" data-lon="135.7601">京都</button>
+  <button class="chip" data-lat="43.0687" data-lon="141.3508">北海道</button>
+  <button class="chip" data-lat="33.5900" data-lon="130.4199">福岡</button>
+</div>
+
+<div class="hazard-panel wrap">
+  <span class="hazard-panel-label">ハザード情報を重ねて表示</span>
+  <label class="hazard-toggle"><input type="checkbox" data-hazard="flood"><span>🌊 洪水浸水想定</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-hazard="tsunami"><span>🌀 津波浸水想定</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-hazard="surge"><span>⛈️ 高潮浸水想定</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-hazard="landslide"><span>⛰️ 土砂災害警戒区域</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-hazard="liquefaction"><span>🏚️ 液状化しやすさ</span></label>
+</div>
+
+<div class="hazard-panel wrap">
+  <span class="hazard-panel-label">周辺施設を重ねて表示</span>
+  <label class="hazard-toggle"><input type="checkbox" data-facility="school"><span>🏫 学校</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-facility="nursery"><span>🧸 保育園・幼稚園</span></label>
+  <label class="hazard-toggle"><input type="checkbox" data-facility="medical"><span>🏥 医療機関</span></label>
+</div>
+
+<div class="area-summary wrap">
+  <div id="area-summary" class="area-summary-box">
+    <div class="area-summary-title" id="as-title">検索中…</div>
+    <div class="area-summary-grid">
+      <div class="as-stat"><span class="as-label">成約件数</span><span class="as-value" id="as-count">―</span></div>
+      <div class="as-stat"><span class="as-label">㎡単価中央値</span><span class="as-value" id="as-sqm">―</span></div>
+      <div class="as-stat"><span class="as-label">坪単価中央値</span><span class="as-value" id="as-tsubo">―</span></div>
+      <div class="as-stat"><span class="as-label">取引期間</span><span class="as-value" id="as-period">―</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="map-shell">
+  <div id="map"></div>
+  <div class="map-btn-row">
+    <button id="recenter-btn" class="map-float-btn recenter-btn" type="button">📍 この周辺で再検索</button>
+    <button id="gmaps-btn" class="map-float-btn" type="button">🗺️ Googleマップで開く</button>
+  </div>
+  <div id="side-panel" class="side-panel">
+    <div class="side-panel-head">
+      <span>詳細</span>
+      <button id="side-panel-close" type="button" aria-label="閉じる">×</button>
+    </div>
+    <div id="side-panel-content" class="side-panel-content"></div>
+  </div>
+</div>
+
+<div id="sheet-overlay" class="sheet-overlay"></div>
+<div id="bottom-sheet" class="bottom-sheet" data-snap="half">
+  <div class="sheet-handle-row">
+    <div class="sheet-handle"></div>
+    <button id="sheet-close" class="sheet-close" type="button" aria-label="閉じる">×</button>
+  </div>
+  <div class="sheet-snap-buttons">
+    <button type="button" data-snap="peek">▽ 最小</button>
+    <button type="button" data-snap="half" class="active">◇ 中央</button>
+    <button type="button" data-snap="full">△ 最大</button>
+  </div>
+  <div class="sheet-jump-buttons">
+    <button type="button" data-jump="top">▲ 最上部表示</button>
+    <button type="button" data-jump="middle">■ 中央表示</button>
+    <button type="button" data-jump="bottom">▼ 最下部表示</button>
+  </div>
+  <div id="sheet-content" class="sheet-content"></div>
+</div>
+<div class="status-line">
+  <span id="status-text">読み込み中…</span>
+  <span id="count-text"></span>
+</div>
+
+<div class="legend">
+  <div class="legend-group">
+    <span class="legend-dot" style="background:#243A4D"></span>成約価格（駅単位に集約・件数で大きさが変化）
+  </div>
+  <div class="legend-group">
+    地価公示・地価調査（円/㎡）
+    <span class="legend-scale">
+      <span style="background:#fde68a"></span><span style="background:#fbbf24"></span><span style="background:#f59e0b"></span><span style="background:#d97706"></span><span style="background:#b45309"></span>
+    </span>
+    <span>低 → 高</span>
+  </div>
+</div>
+
+<div class="trend-card wrap">
+  <div class="trend-head">
+    <h3>📈 ㎡単価の推移（中心エリア）</h3>
+    <div class="trend-toggle">
+      <button class="trend-toggle-btn active" data-years="5">5年</button>
+      <button class="trend-toggle-btn" data-years="10">10年</button>
+    </div>
+  </div>
+  <div id="trend-chart"></div>
+  <p id="trend-status" class="trend-status">読み込み中…</p>
+</div>
+
+<div class="trend-card wrap">
+  <div class="trend-head">
+    <h3>📈 坪単価の推移（中心エリア）</h3>
+  </div>
+  <div id="trend-chart-tsubo"></div>
+  <p id="trend-status-tsubo" class="trend-status">読み込み中…</p>
+</div>
+
+<div class="share-cta">
+  <div class="wrap">
+    <p>このマップが役に立ったら、まわりの人にも教えてあげてください。</p>
+    <a href="#" id="share-x-btn" class="btn btn-fill" style="background:#000;border-color:#000;">🐦 Xでシェアする</a>
+  </div>
+  <p class="credit">データ出典：国土交通省「不動産情報ライブラリ」/ 地図：国土地理院</p>
+</div>
+
+<script>
+const API_BASE = "https://reinfolib.jreco.net/api";
+const TILE_Z = 14;
+const TILE_RADIUS = 1; // 中心タイルの周囲1マス(3x3=9タイル)を取得
+
+function lonLatToTile(lon, lat, z){
+  const n = Math.pow(2, z);
+  const x = Math.floor((lon + 180) / 360 * n);
+  const latRad = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1/Math.cos(latRad)) / Math.PI) / 2 * n);
+  return {x, y};
+}
+
+function recentQuarterRange(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const q = Math.floor(now.getMonth() / 3) + 1;
+  const toVal = y * 10 + q;
+  const fromY = y - 2;
+  const fromVal = fromY * 10 + q;
+  return { from: fromVal, to: toVal };
+}
+
+function parseYen(str){
+  if(!str) return null;
+  const m = String(str).replace(/,/g,"").match(/([\d.]+)\s*万円/);
+  if(m) return Math.round(parseFloat(m[1]) * 10000);
+  return null;
+}
+function parsePricePerSqm(str){
+  if(!str) return null;
+  const m = String(str).replace(/,/g,"").match(/([\d.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+function parseArea(str){
+  if(!str) return null;
+  const m = String(str).replace(/,/g,"").match(/([\d.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+function median(values){
+  if(!values.length) return null;
+  const sorted = [...values].sort((a,b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+const LAND_TYPE_COLORS = {
+  "宅地(土地)": "#3f7d6b",
+  "宅地(土地と建物)": "#b8935a",
+  "中古マンション等": "#4a6fa5",
+  "農地": "#8b6f47",
+  "林地": "#5c7a4f",
+};
+function landTypeColor(name){
+  return LAND_TYPE_COLORS[name] || "#7d7568";
+}
+const LAND_TYPE_LEGEND_HTML = Object.entries(LAND_TYPE_COLORS)
+  .map(([name, color]) => `<span class="legend-swatch"><span style="background:${color}"></span>${name}</span>`)
+  .join("");
+
+function relativeTimeLabel(year, quarter){
+  const midMonth = (quarter - 1) * 3 + 1;
+  const target = new Date(year, midMonth, 15);
+  const now = new Date();
+  let months = (now.getFullYear() - target.getFullYear()) * 12 + (now.getMonth() - target.getMonth());
+  if(months < 1) return "今月";
+  if(months < 12) return `${months}ヶ月前`;
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+  return remMonths === 0 ? `${years}年前` : `${years}年${remMonths}ヶ月前`;
+}
+
+function priceLevelStars(diffPct){
+  if(diffPct == null) return null;
+  if(diffPct > 20) return { stars: 5, label: "相場より高め" };
+  if(diffPct > 5) return { stars: 4, label: "やや高め" };
+  if(diffPct >= -5) return { stars: 3, label: "標準的" };
+  if(diffPct >= -20) return { stars: 2, label: "やや安め" };
+  return { stars: 1, label: "相場より安め" };
+}
+function starString(n){ return "★".repeat(n) + "☆".repeat(5 - n); }
+
+function tileWidthMeters(lat, z){
+  return 40075016.686 * Math.cos(lat * Math.PI / 180) / Math.pow(2, z);
+}
+
+function parseDepthText(str){
+  if(!str) return null;
+  const m = String(str).match(/([\d.]+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+function depthColor(v, palette){
+  const idx = v == null ? 0 : v < 0.5 ? 0 : v < 1 ? 1 : v < 3 ? 2 : v < 5 ? 3 : v < 10 ? 4 : 5;
+  return palette[Math.min(idx, palette.length - 1)];
+}
+const FLOOD_PALETTE = ["#bfdbfe","#93c5fd","#60a5fa","#3b82f6","#1d4ed8","#1e3a8a"];
+const TSUNAMI_PALETTE = ["#ede9fe","#c4b5fd","#a78bfa","#8b5cf6","#7c3aed","#5b21b6"];
+const SURGE_PALETTE = ["#ffedd5","#fed7aa","#fdba74","#fb923c","#f97316","#c2410c"];
+const LANDSLIDE_ZONE_NAMES = { 1: "土砂災害警戒区域（イエローゾーン）", 2: "土砂災害特別警戒区域（レッドゾーン）" };
+const LANDSLIDE_PHENOMENON_NAMES = { 1: "急傾斜地の崩壊", 2: "土石流", 3: "地滑り" };
+function landslideColor(zone){ return zone === 2 ? "#dc2626" : "#facc15"; }
+function liquefactionColor(note){
+  const s = note || "";
+  if(s.includes("極めて") && s.includes("しやすい")) return "#7c2d12";
+  if(s.includes("やや") && s.includes("しやすい")) return "#f97316";
+  if(s.includes("しやすい")) return "#dc2626";
+  if(s.includes("しにくい")) return "#9ca3af";
+  return "#facc15";
+}
+
+const HAZARD_DEFS = {
+  flood: {
+    endpoint: "XKT026",
+    transform: (f) => {
+      const p = f.properties;
+      const rank = p.A31a_205;
+      p._color = FLOOD_PALETTE[Math.min((rank || 1) - 1, FLOOD_PALETTE.length - 1)];
+      p._popup = `<div class="pop-title">🌊 洪水浸水想定区域</div>
+        <div class="pop-row"><span class="k">河川</span><span class="v">${p.A31a_202 || "―"}</span></div>
+        <div class="pop-row"><span class="k">浸水深ランク</span><span class="v">${rank ?? "―"}</span></div>
+        <p style="font-size:.76rem;color:var(--muted);margin-top:6px;">数値が大きいほど浸水深が深い想定です。正確な浸水深は河川により基準が異なるため、詳細は<a href="https://disaportal.gsi.go.jp/" target="_blank" rel="noopener">ハザードマップポータル</a>でご確認ください。</p>`;
+      return f;
+    },
+  },
+  tsunami: {
+    endpoint: "XKT028",
+    transform: (f) => {
+      const p = f.properties;
+      p._color = depthColor(parseDepthText(p.A40_003), TSUNAMI_PALETTE);
+      p._popup = `<div class="pop-title">🌀 津波浸水想定</div>
+        <div class="pop-row"><span class="k">浸水深</span><span class="v">${p.A40_003 || "―"}</span></div>
+        <div class="pop-row"><span class="k">対象年度</span><span class="v">${p.target_year || "―"}</span></div>`;
+      return f;
+    },
+  },
+  surge: {
+    endpoint: "XKT027",
+    transform: (f) => {
+      const p = f.properties;
+      p._color = depthColor(parseDepthText(p.A49_003), SURGE_PALETTE);
+      p._popup = `<div class="pop-title">⛈️ 高潮浸水想定</div>
+        <div class="pop-row"><span class="k">浸水深</span><span class="v">${p.A49_003 || "―"}</span></div>
+        <div class="pop-row"><span class="k">対象年度</span><span class="v">${p.target_year || "―"}</span></div>`;
+      return f;
+    },
+  },
+  landslide: {
+    endpoint: "XKT029",
+    transform: (f) => {
+      const p = f.properties;
+      p._color = landslideColor(p.A33_002);
+      p._popup = `<div class="pop-title">⛰️ ${LANDSLIDE_ZONE_NAMES[p.A33_002] || "土砂災害警戒区域"}</div>
+        <div class="pop-row"><span class="k">現象の種類</span><span class="v">${LANDSLIDE_PHENOMENON_NAMES[p.A33_001] || "―"}</span></div>
+        <div class="pop-row"><span class="k">区域名</span><span class="v">${p.A33_005 || "―"}</span></div>
+        <div class="pop-row"><span class="k">所在地</span><span class="v">${p.A33_006 || "―"}</span></div>`;
+      return f;
+    },
+  },
+  liquefaction: {
+    endpoint: "XKT025",
+    transform: (f) => {
+      const p = f.properties;
+      p._color = liquefactionColor(p.note);
+      p._popup = `<div class="pop-title">🏚️ 液状化の発生傾向</div>
+        <div class="pop-row"><span class="k">判定</span><span class="v">${p.note || "―"}</span></div>
+        <div class="pop-row"><span class="k">地形分類</span><span class="v">${p.topographic_classification_name_ja || "―"}</span></div>`;
+      return f;
+    },
+  },
+};
+
+const activeHazards = new Set();
+const hazardCache = {};
+let currentCenterTile = null;
+
+async function refreshHazardLayer(key){
+  if(!currentCenterTile || !map.getSource(`hazard-${key}`)) return;
+  const def = HAZARD_DEFS[key];
+  const tileKey = `${currentCenterTile.x},${currentCenterTile.y}`;
+  if(hazardCache[key] && hazardCache[key].tileKey === tileKey){
+    map.getSource(`hazard-${key}`).setData({ type: "FeatureCollection", features: hazardCache[key].features });
+    return;
+  }
+  const raw = await fetchTiles(def.endpoint, {}, currentCenterTile);
+  const features = raw.map(def.transform);
+  hazardCache[key] = { tileKey, features };
+  map.getSource(`hazard-${key}`).setData({ type: "FeatureCollection", features });
+}
+
+const FACILITY_DEFS = {
+  school: {
+    endpoint: "XKT006", color: "#2563eb",
+    transform: (f) => {
+      const p = f.properties;
+      p._popup = `<div class="pop-title">🏫 ${p.P29_004_ja || "学校"}</div>
+        <div class="pop-row"><span class="k">種別</span><span class="v">${p.P29_003_name_ja || "―"}</span></div>
+        <div class="pop-row"><span class="k">所在地</span><span class="v">${p.P29_005_ja || "―"}</span></div>`;
+      return f;
+    },
+  },
+  nursery: {
+    endpoint: "XKT007", color: "#16a34a",
+    transform: (f) => {
+      const p = f.properties;
+      p._popup = `<div class="pop-title">🧸 ${p.preSchoolName_ja || "保育園・幼稚園"}</div>
+        <div class="pop-row"><span class="k">種別</span><span class="v">${p.schoolClassCode_name_ja || "―"}</span></div>
+        <div class="pop-row"><span class="k">所在地</span><span class="v">${p.location_ja || "―"}</span></div>`;
+      return f;
+    },
+  },
+  medical: {
+    endpoint: "XKT010", color: "#dc2626",
+    transform: (f) => {
+      const p = f.properties;
+      p._popup = `<div class="pop-title">🏥 ${p.P04_002_ja || "医療機関"}</div>
+        <div class="pop-row"><span class="k">種別</span><span class="v">${p.P04_001_name_ja || "―"}</span></div>
+        <div class="pop-row"><span class="k">診療科</span><span class="v">${p.medical_subject_ja || "―"}</span></div>
+        <div class="pop-row"><span class="k">所在地</span><span class="v">${p.P04_003_ja || "―"}</span></div>`;
+      return f;
+    },
+  },
+};
+
+const activeFacilities = new Set();
+const facilityCache = {};
+
+async function refreshFacilityLayer(key){
+  if(!currentCenterTile || !map.getSource(`facility-${key}`)) return;
+  const def = FACILITY_DEFS[key];
+  const tileKey = `${currentCenterTile.x},${currentCenterTile.y}`;
+  if(facilityCache[key] && facilityCache[key].tileKey === tileKey){
+    map.getSource(`facility-${key}`).setData({ type: "FeatureCollection", features: facilityCache[key].features });
+    return;
+  }
+  const raw = await fetchTiles(def.endpoint, {}, currentCenterTile);
+  const features = raw.map(def.transform);
+  facilityCache[key] = { tileKey, features };
+  map.getSource(`facility-${key}`).setData({ type: "FeatureCollection", features });
+}
+
+function parseQuarterLabel(str){
+  const m = String(str || "").match(/(\d{4})年第(\d)四半期/);
+  if(!m) return null;
+  const year = parseInt(m[1], 10), quarter = parseInt(m[2], 10);
+  return { year, quarter, sortKey: year * 10 + quarter, label: `${year}\nQ${quarter}` };
+}
+
+function buildQuarterlyTrend(records){
+  const byQuarter = new Map();
+  records.forEach(r => {
+    const q = parseQuarterLabel(r.point_in_time_name_ja);
+    if(!q || r._price_per_sqm == null) return;
+    if(!byQuarter.has(q.sortKey)) byQuarter.set(q.sortKey, { label: q.label, values: [] });
+    byQuarter.get(q.sortKey).values.push(r._price_per_sqm);
+  });
+  return [...byQuarter.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([sortKey, v]) => ({ sortKey, label: v.label, median: median(v.values), count: v.values.length }));
+}
+
+function renderTrendSVG(data, unitLabel = "㎡"){
+  if(!data.length){
+    return `<p style="text-align:center;color:var(--muted);padding:24px 0;font-size:.88rem;">この範囲では四半期ごとの推移を出すのに十分なデータがありません。</p>`;
+  }
+  const W = 680, H = 220, padL = 54, padR = 16, padT = 16, padB = 30;
+  const values = data.map(d => d.median).filter(v => v != null);
+  const maxV = values.length ? Math.max(...values) * 1.15 : 1;
+  const xStep = (W - padL - padR) / Math.max(data.length - 1, 1);
+  const yScale = v => H - padB - (v / maxV) * (H - padT - padB);
+
+  const gridY = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const v = f * maxV;
+    const y = yScale(v);
+    return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#dcd6ca" stroke-width="1"/>
+      <text x="${padL - 8}" y="${y + 3}" font-size="10" fill="#5c564c" text-anchor="end">${fmtManUnit(v)}万円</text>`;
+  }).join("");
+
+  const points = data
+    .map((d, i) => (d.median != null ? `${(padL + i * xStep).toFixed(1)},${yScale(d.median).toFixed(1)}` : null))
+    .filter(Boolean)
+    .join(" ");
+
+  const circles = data.map((d, i) => {
+    if(d.median == null) return "";
+    const x = padL + i * xStep, y = yScale(d.median);
+    const labelText = d.label.replace("\n", " ");
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#b8935a"><title>${labelText}: ${fmtManUnit(d.median)}万円/${unitLabel}（${d.count}件）</title></circle>`;
+  }).join("");
+
+  const labelEvery = Math.max(Math.ceil(data.length / 8), 1);
+  const labels = data.map((d, i) => {
+    if(i % labelEvery !== 0 && i !== data.length - 1) return "";
+    const x = padL + i * xStep;
+    return `<text x="${x.toFixed(1)}" y="${H - 8}" font-size="10" fill="#5c564c" text-anchor="middle">${d.label.replace("\n", " ")}</text>`;
+  }).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">
+    ${gridY}
+    <polyline points="${points}" fill="none" stroke="#b8935a" stroke-width="2"/>
+    ${circles}
+    ${labels}
+  </svg>`;
+}
+
+const popupState = {
+  records: [], medianSqm: null, medianTsubo: null, activeTypes: new Set(), sortKey: "price_desc", areaLabel: "",
+  priceFilter: "all", areaFilter: "all", ageFilter: "all",
+};
+
+function priceRangeBucket(priceNum){
+  if(priceNum == null) return null;
+  if(priceNum <= 9990000) return "p1";
+  if(priceNum <= 29990000) return "p2";
+  if(priceNum <= 59990000) return "p3";
+  if(priceNum <= 99990000) return "p4";
+  return "p5";
+}
+function areaRangeBucket(areaNum){
+  if(areaNum == null) return null;
+  if(areaNum < 50) return "a1";
+  if(areaNum < 100) return "a2";
+  return "a3";
+}
+function ageRangeBucket(constructionYearJa, transactionYear){
+  const m = String(constructionYearJa || "").match(/(\d{4})/);
+  if(!m) return null;
+  const builtYear = parseInt(m[1], 10);
+  const age = (transactionYear || new Date().getFullYear()) - builtYear;
+  if(age <= 10) return "g1";
+  if(age <= 20) return "g2";
+  if(age <= 30) return "g3";
+  return "g4";
+}
+function recordMatchesFilters(r){
+  if(!popupState.activeTypes.has(r.land_type_name_ja || "その他")) return false;
+  if(popupState.priceFilter !== "all" && priceRangeBucket(r._price_num) !== popupState.priceFilter) return false;
+  if(popupState.areaFilter !== "all" && areaRangeBucket(r._area_num) !== popupState.areaFilter) return false;
+  if(popupState.ageFilter !== "all" && ageRangeBucket(r.u_construction_year_ja, r._year) !== popupState.ageFilter) return false;
+  return true;
+}
+
+function sortRecords(records, key){
+  const sorted = [...records];
+  switch(key){
+    case "price_asc": sorted.sort((a,b) => (a._price_num||0) - (b._price_num||0)); break;
+    case "sqm_desc": sorted.sort((a,b) => (b._price_per_sqm||0) - (a._price_per_sqm||0)); break;
+    case "sqm_asc": sorted.sort((a,b) => (a._price_per_sqm||0) - (b._price_per_sqm||0)); break;
+    case "date_desc": sorted.sort((a,b) => (b._quarterSort||0) - (a._quarterSort||0)); break;
+    case "date_asc": sorted.sort((a,b) => (a._quarterSort||0) - (b._quarterSort||0)); break;
+    default: sorted.sort((a,b) => (b._price_num||0) - (a._price_num||0));
+  }
+  return sorted;
+}
+
+function renderRecordItem(r, medianSqm, index){
+  const perSqmText = r._price_per_sqm != null ? `${fmtManUnit(r._price_per_sqm)}万円/㎡` : "";
+  const timeText = r._quarterSort ? `${r.point_in_time_name_ja}（${relativeTimeLabel(r._year, r._quarter)}）` : (r.point_in_time_name_ja || "");
+  let starsHtml = "";
+  if(medianSqm != null && r._price_per_sqm != null){
+    const diffPct = ((r._price_per_sqm - medianSqm) / medianSqm) * 100;
+    const level = priceLevelStars(diffPct);
+    const sign = diffPct >= 0 ? "+" : "";
+    starsHtml = `<div class="pli-stars"><span class="stars">${starString(level.stars)}</span><span>中央値より${sign}${diffPct.toFixed(0)}%（${level.label}）</span></div>`;
+  }
+  const bg = index % 2 ? "var(--cream)" : "#fff";
+  return `<div class="pop-list-item" style="border-left-color:${landTypeColor(r.land_type_name_ja)};background:${bg};">
+    <div class="pli-head">
+      <span><span class="pli-idx">#${r._rank}</span><span class="pli-time">${timeText}</span></span>
+      <span class="pli-price">${r.u_transaction_price_total_ja || "―"}</span>
+    </div>
+    <div class="pli-sub">
+      <span>${r.land_type_name_ja || ""} ${r.floor_plan_name_ja || ""}</span>
+      <span>${r.u_area_ja || ""}${perSqmText ? " ／ " + perSqmText : ""}</span>
+    </div>
+    ${starsHtml}
+  </div>`;
+}
+
+function computeStats(records){
+  const prices = records.map(r => r._price_num).filter(v => v != null);
+  const min = prices.length ? Math.min(...prices) : null;
+  const max = prices.length ? Math.max(...prices) : null;
+  const avg = prices.length ? prices.reduce((a,b) => a+b, 0) / prices.length : null;
+  const ratio = (min != null && max != null && min > 0) ? (max / min) : null;
+  const perSqmValues = records.map(r => r._price_per_sqm).filter(v => v != null);
+  const medianSqm = median(perSqmValues);
+  const medianTsubo = medianSqm != null ? medianSqm * 3.30578 : null;
+  return { min, max, avg, ratio, medianSqm, medianTsubo };
+}
+
+function renderStats(stats){
+  const set = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+  set("pst-range", `${fmtMan(stats.min)} 〜 ${fmtMan(stats.max)}`);
+  set("pst-avg", fmtMan(stats.avg));
+  set("pst-ratio", stats.ratio != null ? stats.ratio.toFixed(1) + "倍" : "―");
+  set("pst-sqm", stats.medianSqm != null ? fmtManUnit(stats.medianSqm) + "万円/㎡" : "―");
+  set("pst-tsubo", stats.medianTsubo != null ? fmtManUnit(stats.medianTsubo) + "万円/坪" : "―");
+}
+
+function renderRecordsList(){
+  const filtered = popupState.records.filter(recordMatchesFilters);
+  const sorted = sortRecords(filtered, popupState.sortKey);
+  const stats = computeStats(filtered);
+  renderStats(stats);
+  const el = document.getElementById("pli-list");
+  if(!el) return;
+  el.innerHTML = sorted.length
+    ? sorted.map((r, i) => renderRecordItem(r, stats.medianSqm, i)).join("")
+    : `<p style="text-align:center;color:var(--ink);padding:14px 0;font-size:.84rem;">条件に合う取引がありません</p>`;
+  const countEl = document.getElementById("pli-count");
+  if(countEl) countEl.textContent = `${sorted.length}件を表示中（全${popupState.records.length}件）`;
+}
+
+function updatePopupFilter(type, checked){
+  if(checked) popupState.activeTypes.add(type);
+  else popupState.activeTypes.delete(type);
+  renderRecordsList();
+}
+
+function updatePopupSort(key){
+  popupState.sortKey = key;
+  renderRecordsList();
+}
+
+function updatePopupPriceFilter(v){ popupState.priceFilter = v; renderRecordsList(); }
+function updatePopupAreaFilter(v){ popupState.areaFilter = v; renderRecordsList(); }
+function updatePopupAgeFilter(v){ popupState.ageFilter = v; renderRecordsList(); }
+
+function copyPopupSummary(){
+  const s = popupState;
+  const text = `${s.areaLabel}\n取引件数：${s.records.length}件\n㎡単価中央値：${s.medianSqm != null ? fmtManUnit(s.medianSqm) + "万円/㎡" : "―"}\n坪単価中央値：${s.medianTsubo != null ? fmtManUnit(s.medianTsubo) + "万円/坪" : "―"}\n（実売価格マップより）`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("pop-copy-btn");
+    if(btn){ const orig = btn.textContent; btn.textContent = "コピーしました"; setTimeout(() => btn.textContent = orig, 1500); }
+  });
+}
+
+function downloadPopupCSV(){
+  const header = ["取引時期", "価格", "種別", "間取り", "面積", "㎡単価(万円)"];
+  const rows = popupState.records.map(r => [
+    r.point_in_time_name_ja || "",
+    r.u_transaction_price_total_ja || "",
+    r.land_type_name_ja || "",
+    r.floor_plan_name_ja || "",
+    r.u_area_ja || "",
+    r._price_per_sqm != null ? fmtManUnit(r._price_per_sqm) : "",
+  ]);
+  const csv = [header, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${popupState.areaLabel.replace(/\s+/g, "_")}_成約データ.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+let currentLonLat = null;
+let trendRangeYears = 5;
+
+async function loadTrend(lon, lat){
+  const trendEl = document.getElementById("trend-chart");
+  const trendStatusEl = document.getElementById("trend-status");
+  const trendTsuboEl = document.getElementById("trend-chart-tsubo");
+  const trendTsuboStatusEl = document.getElementById("trend-status-tsubo");
+  trendStatusEl.textContent = "推移データを取得中…";
+  trendTsuboStatusEl.textContent = "推移データを取得中…";
+  const centerTile = lonLatToTile(lon, lat, TILE_Z);
+  const now = new Date();
+  const y = now.getFullYear();
+  const q = Math.floor(now.getMonth() / 3) + 1;
+  const to = y * 10 + q;
+  const from = (y - trendRangeYears) * 10 + q;
+
+  let radius = 0;
+  let raw = await fetchTiles("XPT001", { from, to }, centerTile, radius);
+  if(raw.length < 20){
+    radius = TILE_RADIUS;
+    raw = await fetchTiles("XPT001", { from, to }, centerTile, radius);
+  }
+  raw.forEach(f => {
+    const p = f.properties;
+    p._price_num = parseYen(p.u_transaction_price_total_ja);
+    p._area_num = parseArea(p.u_area_ja);
+    p._price_per_sqm = (p._price_num != null && p._area_num) ? p._price_num / p._area_num : null;
+  });
+  const trendSqm = buildQuarterlyTrend(raw.map(f => f.properties));
+  const trendTsubo = trendSqm.map(d => ({ ...d, median: d.median != null ? d.median * 3.30578 : null }));
+
+  trendEl.innerHTML = renderTrendSVG(trendSqm, "㎡");
+  trendTsuboEl.innerHTML = renderTrendSVG(trendTsubo, "坪");
+  const areaLabel = radius === 0 ? "中心タイル1枚分" : "データが少ないため範囲を拡大した周辺タイル分";
+  trendStatusEl.textContent = `過去${trendRangeYears}年・${areaLabel}の成約データ（${raw.length}件）から四半期ごとの㎡単価中央値を算出`;
+  trendTsuboStatusEl.textContent = `過去${trendRangeYears}年・${areaLabel}の成約データ（${raw.length}件）から四半期ごとの坪単価中央値を算出`;
+}
+
+async function fetchTiles(endpoint, params, centerTile, radius = TILE_RADIUS){
+  const tasks = [];
+  for(let dx=-radius; dx<=radius; dx++){
+    for(let dy=-radius; dy<=radius; dy++){
+      const p = new URLSearchParams(params);
+      p.set("z", TILE_Z);
+      p.set("x", centerTile.x + dx);
+      p.set("y", centerTile.y + dy);
+      p.set("response_format", "geojson");
+      tasks.push(
+        fetch(`${API_BASE}/${endpoint}?${p.toString()}`)
+          .then(r => r.ok ? r.json() : {features: []})
+          .catch(() => ({features: []}))
+      );
+    }
+  }
+  const results = await Promise.all(tasks);
+  const features = [];
+  results.forEach(fc => { if(fc && fc.features) features.push(...fc.features); });
+  return features;
+}
+
+function groupStationPoints(features){
+  const byCoord = new Map();
+  features.forEach(f => {
+    const key = f.geometry.coordinates.join(",");
+    if(!byCoord.has(key)) byCoord.set(key, []);
+    byCoord.get(key).push(f.properties);
+  });
+  const out = [];
+  byCoord.forEach((records, key) => {
+    const [lon, lat] = key.split(",").map(Number);
+    records.forEach(r => { r._price_num = parseYen(r.u_transaction_price_total_ja); });
+    out.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      properties: { count: records.length, records: JSON.stringify(records) },
+    });
+  });
+  return out;
+}
+
+function buildAreaSummary(xpt001Raw){
+  const props = xpt001Raw.map(f => f.properties);
+  const count = props.length;
+
+  const areaCounts = new Map();
+  props.forEach(p => {
+    const key = `${p.city_name_ja || ""} ${p.district_name_ja || ""}`.trim();
+    if(!key) return;
+    areaCounts.set(key, (areaCounts.get(key) || 0) + 1);
+  });
+  let title = "このエリア";
+  let maxCount = 0;
+  areaCounts.forEach((c, k) => { if(c > maxCount){ maxCount = c; title = k; } });
+
+  const perSqmValues = [];
+  let minSort = null, maxSort = null;
+  props.forEach(p => {
+    const priceNum = parseYen(p.u_transaction_price_total_ja);
+    const areaNum = parseArea(p.u_area_ja);
+    if(priceNum != null && areaNum) perSqmValues.push(priceNum / areaNum);
+    const q = parseQuarterLabel(p.point_in_time_name_ja);
+    if(q){
+      if(minSort == null || q.sortKey < minSort) minSort = q.sortKey;
+      if(maxSort == null || q.sortKey > maxSort) maxSort = q.sortKey;
+    }
+  });
+  const medianSqm = median(perSqmValues);
+  const medianTsubo = medianSqm != null ? medianSqm * 3.30578 : null;
+  const periodText = (minSort != null && maxSort != null)
+    ? `${Math.floor(minSort / 10)}年〜${Math.floor(maxSort / 10)}年`
+    : "―";
+
+  return { title, count, medianSqm, medianTsubo, periodText };
+}
+
+function renderAreaSummary(summary){
+  document.getElementById("as-title").textContent = `📍 ${summary.title || "このエリア"}周辺`;
+  document.getElementById("as-count").textContent = `${summary.count}件`;
+  document.getElementById("as-sqm").textContent = summary.medianSqm != null ? `${fmtManUnit(summary.medianSqm)}万円/㎡` : "―";
+  document.getElementById("as-tsubo").textContent = summary.medianTsubo != null ? `${fmtManUnit(summary.medianTsubo)}万円/坪` : "―";
+  document.getElementById("as-period").textContent = summary.periodText;
+}
+
+let map, statusEl, countEl;
+
+function fmtMan(yen){
+  if(yen == null) return "―";
+  return Math.round(yen / 10000).toLocaleString() + "万円";
+}
+function fmtManUnit(yen){
+  if(yen == null) return null;
+  return (yen / 10000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+function isMobileView(){
+  return document.body.classList.contains("mode-mobile");
+}
+
+function openBottomSheet(html){
+  const sheet = document.getElementById("bottom-sheet");
+  const overlay = document.getElementById("sheet-overlay");
+  document.getElementById("sheet-content").innerHTML = html;
+  sheet.dataset.snap = "half";
+  document.querySelectorAll(".sheet-snap-buttons button").forEach(b => b.classList.toggle("active", b.dataset.snap === "half"));
+  sheet.classList.add("visible");
+  overlay.classList.add("visible");
+  document.getElementById("sheet-content").scrollTop = 0;
+}
+
+function closeBottomSheet(){
+  document.getElementById("bottom-sheet").classList.remove("visible");
+  document.getElementById("sheet-overlay").classList.remove("visible");
+}
+
+function showResultPopup(lngLat, html){
+  if(isMobileView()) openBottomSheet(html);
+  else openSidePanel(html);
+}
+
+function openSidePanel(html){
+  document.getElementById("side-panel-content").innerHTML = html;
+  document.getElementById("side-panel").classList.add("visible");
+  document.getElementById("side-panel-content").scrollTop = 0;
+}
+
+function closeSidePanel(){
+  document.getElementById("side-panel").classList.remove("visible");
+}
+
+function buildStationPopupHTML(props){
+  const records = JSON.parse(props.records);
+  records.forEach(r => {
+    r._area_num = parseArea(r.u_area_ja);
+    r._price_per_sqm = (r._price_num != null && r._area_num) ? r._price_num / r._area_num : null;
+    const q = parseQuarterLabel(r.point_in_time_name_ja);
+    r._quarterSort = q ? q.sortKey : 0;
+    r._year = q ? q.year : null;
+    r._quarter = q ? q.quarter : null;
+    r.land_type_name_ja = r.land_type_name_ja || "その他";
+  });
+  records.sort((a,b) => (b._price_num||0) - (a._price_num||0));
+  records.forEach((r, i) => { r._rank = i + 1; });
+
+  const { min, max, avg, ratio, medianSqm, medianTsubo } = computeStats(records);
+
+  const areaLabel = `${records[0].city_name_ja || ""} ${records[0].district_name_ja || ""}周辺`;
+  const distinctTypes = [...new Set(records.map(r => r.land_type_name_ja))];
+
+  popupState.records = records;
+  popupState.medianSqm = medianSqm;
+  popupState.medianTsubo = medianTsubo;
+  popupState.activeTypes = new Set(distinctTypes);
+  popupState.sortKey = "price_desc";
+  popupState.areaLabel = areaLabel;
+  popupState.priceFilter = "all";
+  popupState.areaFilter = "all";
+  popupState.ageFilter = "all";
+
+  let html = `<div class="pop-jump">
+    <button type="button" onclick="const el=this.closest('#sheet-content, #side-panel-content'); if(el) el.scrollTop=0;">▲上</button>
+    <button type="button" onclick="const el=this.closest('#sheet-content, #side-panel-content'); if(el) el.scrollTop=(el.scrollHeight-el.clientHeight)/2;">■中</button>
+    <button type="button" onclick="const el=this.closest('#sheet-content, #side-panel-content'); if(el) el.scrollTop=el.scrollHeight;">▼下</button>
+  </div>`;
+  html += `<div class="pop-title">📍 ${areaLabel}</div>`;
+  html += `<div class="pop-badge">過去${records.length}件の成約事例を集計</div>`;
+  html += `<p class="pop-note">※個別の物件位置ではなく、取引の最寄り駅を代表点として表示しています</p>`;
+  html += `<div class="pop-stats">
+    <div class="pop-row"><span class="k">価格帯</span><span class="v" id="pst-range">${fmtMan(min)} 〜 ${fmtMan(max)}</span></div>
+    <div class="pop-row"><span class="k">平均値</span><span class="v" id="pst-avg">${fmtMan(avg)}</span></div>
+    <div class="pop-row"><span class="k">価格差<span class="pop-subtext">(最小〜最大の倍率)</span></span><span class="v" id="pst-ratio">${ratio != null ? ratio.toFixed(1) + "倍" : "―"}</span></div>
+    <div class="pop-row"><span class="k">㎡単価中央値</span><span class="v" id="pst-sqm">${medianSqm != null ? fmtManUnit(medianSqm) + "万円/㎡" : "―"}</span></div>
+    <div class="pop-row"><span class="k">坪単価中央値</span><span class="v" id="pst-tsubo">${medianTsubo != null ? fmtManUnit(medianTsubo) + "万円/坪" : "―"}</span></div>
+  </div>`;
+  html += `<div class="pop-legend">${LAND_TYPE_LEGEND_HTML}</div>`;
+  html += `<div class="pop-filter-row">${distinctTypes.map(t =>
+    `<label class="pop-filter-chip" style="border-color:${landTypeColor(t)};"><input type="checkbox" checked onchange="updatePopupFilter('${t.replace(/'/g,"\\'")}', this.checked)">${t}</label>`
+  ).join("")}</div>
+  <div class="pop-filter-row2">
+    <select class="pop-mini-select" onchange="updatePopupPriceFilter(this.value)">
+      <option value="all">価格帯: すべて</option>
+      <option value="p1">〜999万円</option>
+      <option value="p2">1,000〜2,999万円</option>
+      <option value="p3">3,000〜5,999万円</option>
+      <option value="p4">6,000〜9,999万円</option>
+      <option value="p5">10,000万円〜</option>
+    </select>
+    <select class="pop-mini-select" onchange="updatePopupAreaFilter(this.value)">
+      <option value="all">面積: すべて</option>
+      <option value="a1">〜50㎡</option>
+      <option value="a2">50〜100㎡</option>
+      <option value="a3">100㎡〜</option>
+    </select>
+    <select class="pop-mini-select" onchange="updatePopupAgeFilter(this.value)">
+      <option value="all">築年数: すべて</option>
+      <option value="g1">〜築10年</option>
+      <option value="g2">築10〜20年</option>
+      <option value="g3">築20〜30年</option>
+      <option value="g4">築30年〜</option>
+    </select>
+  </div>
+  <select class="pop-sort-select" onchange="updatePopupSort(this.value)">
+    <option value="price_desc">価格が高い順</option>
+    <option value="price_asc">価格が安い順</option>
+    <option value="sqm_desc">㎡単価が高い順</option>
+    <option value="sqm_asc">㎡単価が安い順</option>
+    <option value="date_desc">新しい順</option>
+    <option value="date_asc">古い順</option>
+  </select>
+  <div class="pop-action-row">
+    <button type="button" id="pop-copy-btn" class="pop-action-btn" onclick="copyPopupSummary()">📋 結果をコピー</button>
+    <button type="button" class="pop-action-btn" onclick="downloadPopupCSV()">⬇ CSV</button>
+  </div>
+  <p id="pli-count" class="pop-note">${records.length}件を表示中（全${records.length}件）</p>
+  <p class="pop-note">※「#」は価格が高い順の表示順番号（絞り込み・並び替えでも変わりません）</p>`;
+  html += `<div id="pli-list">${records.map((r, i) => renderRecordItem(r, medianSqm, i)).join("")}</div>`;
+  html += buildShareButtonHTML();
+  return html;
+}
+
+function buildShareButtonHTML(){
+  const text = encodeURIComponent("実際に売れた価格が分かる不動産相場マップ、無料で使えて便利。");
+  const url = encodeURIComponent(window.location.href);
+  return `<a href="https://twitter.com/intent/tweet?text=${text}&url=${url}" target="_blank" rel="noopener" class="pop-share-btn">🐦 この検索結果をXでシェア</a>`;
+}
+
+function buildLandPricePopupHTML(p){
+  return `
+    <div class="pop-title">${p.location_number_ja || p.location || "地価公示・地価調査地点"}</div>
+    <div class="pop-badge">${p.target_year_name_ja || ""}</div>
+    <div class="pop-row"><span class="k">価格（円/㎡）</span><span class="v">${p.u_current_years_price_ja || "―"}</span></div>
+    <div class="pop-row"><span class="k">前年比</span><span class="v">${p.year_on_year_change_rate != null ? p.year_on_year_change_rate + "%" : "―"}</span></div>
+    <div class="pop-row"><span class="k">用途地域</span><span class="v">${p.regulations_use_category_name_ja || "―"}</span></div>
+    <div class="pop-row"><span class="k">最寄駅</span><span class="v">${p.nearest_station_name_ja || "―"}（${p.u_road_distance_to_nearest_station_name_ja || "―"}）</span></div>
+    <div class="pop-row"><span class="k">地積</span><span class="v">${p.u_cadastral_ja || "―"}</span></div>
+    ${buildShareButtonHTML()}
+  `;
+}
+
+async function loadArea(lon, lat){
+  statusEl.textContent = "データを取得中…";
+  countEl.textContent = "";
+  map.flyTo({ center: [lon, lat], zoom: 15 });
+  currentLonLat = { lon, lat };
+
+  const centerTile = lonLatToTile(lon, lat, TILE_Z);
+  currentCenterTile = centerTile;
+  const { from, to } = recentQuarterRange();
+  const year = new Date().getFullYear();
+
+  const [xpt001Raw, xpt002Raw] = await Promise.all([
+    fetchTiles("XPT001", { from, to }, centerTile),
+    fetchTiles("XPT002", { year }, centerTile),
+  ]);
+
+  const stationFeatures = groupStationPoints(xpt001Raw);
+  renderAreaSummary(buildAreaSummary(xpt001Raw));
+
+  xpt002Raw.forEach(f => {
+    f.properties._price_num = parsePricePerSqm(f.properties.u_current_years_price_ja);
+  });
+
+  map.getSource("stations").setData({ type: "FeatureCollection", features: stationFeatures });
+  map.getSource("landprices").setData({ type: "FeatureCollection", features: xpt002Raw });
+  await Promise.all([...activeHazards].map(key => refreshHazardLayer(key)));
+  await Promise.all([...activeFacilities].map(key => refreshFacilityLayer(key)));
+  loadTrend(lon, lat);
+
+  const areaWidthKm = (tileWidthMeters(lat, TILE_Z) * (2 * TILE_RADIUS + 1) / 1000).toFixed(1);
+  statusEl.textContent = `直近2年の成約データ・${year}年の地価公示データを表示中（検索エリア：中心から約${areaWidthKm}km四方）`;
+  countEl.textContent = `駅ポイント ${stationFeatures.length}件（取引${xpt001Raw.length}件を集約） / 地価地点 ${xpt002Raw.length}件`;
+}
+
+async function geocodeAndLoad(query){
+  statusEl.textContent = "住所を検索中…";
+  try{
+    const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if(!data || !data.length){
+      statusEl.textContent = "住所が見つかりませんでした。別のキーワードでお試しください。";
+      return;
+    }
+    const [lon, lat] = data[0].geometry.coordinates;
+    loadArea(lon, lat);
+    updateShareUrl({ address: query });
+  }catch(e){
+    statusEl.textContent = "住所検索でエラーが発生しました。";
+  }
+}
+
+function updateShareUrl({ address, lat, lon }){
+  const url = new URL(window.location.href);
+  url.search = "";
+  if(address) url.searchParams.set("address", address);
+  else if(lat != null && lon != null){
+    url.searchParams.set("lat", lat.toFixed(5));
+    url.searchParams.set("lon", lon.toFixed(5));
+  }
+  window.history.replaceState(null, "", url.toString());
+}
+
+function applyViewMode(mode){
+  document.body.classList.remove("mode-mobile", "mode-pc");
+  document.body.classList.add(mode === "mobile" ? "mode-mobile" : "mode-pc");
+  document.querySelectorAll("#mode-toggle button").forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  statusEl = document.getElementById("status-text");
+  countEl = document.getElementById("count-text");
+
+  const initialMode = window.matchMedia("(max-width: 640px)").matches ? "mobile" : "pc";
+  applyViewMode(initialMode);
+  document.querySelectorAll("#mode-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => applyViewMode(btn.dataset.mode));
+  });
+
+  document.getElementById("share-x-btn").addEventListener("click", (e) => {
+    e.preventDefault();
+    const text = encodeURIComponent("【実売成約価格ベース】全国不動産エリア相場マップ　売出価格じゃなく、実際に売れた価格で相場が分かる無料ツール");
+    const url = encodeURIComponent(window.location.origin);
+    const a = document.createElement("a");
+    a.href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  map = new maplibregl.Map({
+    container: "map",
+    attributionControl: false,
+    style: {
+      version: 8,
+      sources: {
+        gsi: {
+          type: "raster",
+          tiles: ["https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png"],
+          tileSize: 256,
+        },
+      },
+      layers: [{ id: "gsi", type: "raster", source: "gsi" }],
+    },
+    center: [135.4962, 34.7025],
+    zoom: 15,
+  });
+  map.addControl(new maplibregl.NavigationControl(), "top-right");
+  map.addControl(new maplibregl.AttributionControl({
+    compact: true,
+    customAttribution: '地図: <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">国土地理院</a> / データ: <a href="https://www.reinfolib.mlit.go.jp/" target="_blank">不動産情報ライブラリ</a>',
+  }), "bottom-right");
+  const collapseAttrib = () => {
+    const el = document.querySelector(".maplibregl-ctrl-attrib");
+    if(el){ el.removeAttribute("open"); el.classList.remove("maplibregl-compact-show"); }
+  };
+  collapseAttrib();
+  setTimeout(collapseAttrib, 0);
+  setTimeout(collapseAttrib, 300);
+
+  const recenterBtn = document.getElementById("recenter-btn");
+  recenterBtn.addEventListener("click", () => {
+    const c = map.getCenter();
+    loadArea(c.lng, c.lat);
+    document.querySelectorAll(".chip").forEach(ch => ch.classList.remove("active"));
+    updateShareUrl({ lat: c.lat, lon: c.lng });
+  });
+  document.getElementById("gmaps-btn").addEventListener("click", () => {
+    const c = map.getCenter();
+    const a = document.createElement("a");
+    a.href = `https://www.google.com/maps?q=${c.lat},${c.lng}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  map.on("load", () => {
+    map.addSource("landprices", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addSource("stations", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+
+    Object.keys(HAZARD_DEFS).forEach(key => {
+      map.addSource(`hazard-${key}`, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: `hazard-${key}-layer`,
+        type: "fill",
+        source: `hazard-${key}`,
+        layout: { visibility: "none" },
+        paint: {
+          "fill-color": ["get", "_color"],
+          "fill-opacity": 0.5,
+          "fill-outline-color": "rgba(0,0,0,0.25)",
+        },
+      });
+      map.on("click", `hazard-${key}-layer`, (e) => {
+        showResultPopup(e.lngLat, e.features[0].properties._popup);
+      });
+      map.on("mouseenter", `hazard-${key}-layer`, () => map.getCanvas().style.cursor = "pointer");
+      map.on("mouseleave", `hazard-${key}-layer`, () => map.getCanvas().style.cursor = "");
+    });
+
+    Object.entries(FACILITY_DEFS).forEach(([key, def]) => {
+      map.addSource(`facility-${key}`, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: `facility-${key}-layer`,
+        type: "circle",
+        source: `facility-${key}`,
+        layout: { visibility: "none" },
+        paint: {
+          "circle-radius": 5,
+          "circle-color": def.color,
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": "#fff",
+        },
+      });
+      map.on("click", `facility-${key}-layer`, (e) => {
+        showResultPopup(e.features[0].geometry.coordinates, e.features[0].properties._popup);
+      });
+      map.on("mouseenter", `facility-${key}-layer`, () => map.getCanvas().style.cursor = "pointer");
+      map.on("mouseleave", `facility-${key}-layer`, () => map.getCanvas().style.cursor = "");
+    });
+
+    map.addLayer({
+      id: "landprices-layer",
+      type: "circle",
+      source: "landprices",
+      paint: {
+        "circle-radius": 6,
+        "circle-color": [
+          "step", ["coalesce", ["get", "_price_num"], 0],
+          "#fde68a", 150000, "#fbbf24", 350000, "#f59e0b", 700000, "#d97706", 1500000, "#b45309"
+        ],
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#fff",
+      },
+    });
+
+    map.addLayer({
+      id: "stations-layer",
+      type: "circle",
+      source: "stations",
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["get", "count"], 1, 8, 50, 22],
+        "circle-color": "#243A4D",
+        "circle-opacity": 0.75,
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#fff",
+      },
+    });
+
+    map.addLayer({
+      id: "stations-label",
+      type: "symbol",
+      source: "stations",
+      layout: { "text-field": ["to-string", ["get", "count"]], "text-size": 11 },
+      paint: { "text-color": "#fff" },
+    });
+
+    map.on("click", "landprices-layer", (e) => {
+      const p = e.features[0].properties;
+      showResultPopup(e.features[0].geometry.coordinates, buildLandPricePopupHTML(p));
+    });
+    map.on("click", "stations-layer", (e) => {
+      const p = e.features[0].properties;
+      showResultPopup(e.features[0].geometry.coordinates, buildStationPopupHTML(p));
+    });
+    ["landprices-layer", "stations-layer"].forEach(id => {
+      map.on("mouseenter", id, () => map.getCanvas().style.cursor = "pointer");
+      map.on("mouseleave", id, () => map.getCanvas().style.cursor = "");
+    });
+
+    const initParams = new URLSearchParams(window.location.search);
+    const initAddress = initParams.get("address");
+    const initLat = parseFloat(initParams.get("lat"));
+    const initLon = parseFloat(initParams.get("lon"));
+    if(initAddress){
+      document.getElementById("addr-input").value = initAddress;
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      geocodeAndLoad(initAddress);
+    }else if(!isNaN(initLat) && !isNaN(initLon)){
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      loadArea(initLon, initLat);
+    }else{
+      loadArea(135.4962, 34.7025);
+    }
+  });
+
+  document.getElementById("search-btn").addEventListener("click", () => {
+    const q = document.getElementById("addr-input").value.trim();
+    if(q) geocodeAndLoad(q);
+  });
+  document.getElementById("addr-input").addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      const q = e.target.value.trim();
+      if(q) geocodeAndLoad(q);
+    }
+  });
+  document.querySelectorAll(".hazard-toggle input[data-hazard]").forEach(input => {
+    input.addEventListener("change", async () => {
+      const key = input.dataset.hazard;
+      if(input.checked){
+        activeHazards.add(key);
+        await refreshHazardLayer(key);
+        map.setLayoutProperty(`hazard-${key}-layer`, "visibility", "visible");
+      }else{
+        activeHazards.delete(key);
+        map.setLayoutProperty(`hazard-${key}-layer`, "visibility", "none");
+      }
+    });
+  });
+  document.querySelectorAll(".hazard-toggle input[data-facility]").forEach(input => {
+    input.addEventListener("change", async () => {
+      const key = input.dataset.facility;
+      if(input.checked){
+        activeFacilities.add(key);
+        await refreshFacilityLayer(key);
+        map.setLayoutProperty(`facility-${key}-layer`, "visibility", "visible");
+      }else{
+        activeFacilities.delete(key);
+        map.setLayoutProperty(`facility-${key}-layer`, "visibility", "none");
+      }
+    });
+  });
+
+  document.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      loadArea(parseFloat(chip.dataset.lon), parseFloat(chip.dataset.lat));
+      updateShareUrl({ address: chip.textContent });
+    });
+  });
+
+  document.getElementById("sheet-close").addEventListener("click", closeBottomSheet);
+  document.getElementById("side-panel-close").addEventListener("click", closeSidePanel);
+  document.getElementById("sheet-overlay").addEventListener("click", closeBottomSheet);
+  document.querySelectorAll(".sheet-snap-buttons button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("bottom-sheet").dataset.snap = btn.dataset.snap;
+      document.querySelectorAll(".sheet-snap-buttons button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+  document.querySelectorAll(".sheet-jump-buttons button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const content = document.getElementById("sheet-content");
+      if(btn.dataset.jump === "top") content.scrollTop = 0;
+      else if(btn.dataset.jump === "bottom") content.scrollTop = content.scrollHeight;
+      else content.scrollTop = (content.scrollHeight - content.clientHeight) / 2;
+    });
+  });
+
+  document.querySelectorAll(".trend-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".trend-toggle-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      trendRangeYears = parseInt(btn.dataset.years, 10);
+      if(currentLonLat) loadTrend(currentLonLat.lon, currentLonLat.lat);
+    });
+  });
+});
+</script>
+</body>
+</html>
